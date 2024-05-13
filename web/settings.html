@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>General Settings</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="header">
+        <h1>Smart Relays</h1>
+        <a href="index.html" class="back-button">Back</a>
+    </div>
+    <div class="settings-form">
+        <form>
+            <h2>General Settings</h2>
+            <label for="systemName">Name:</label>
+            <input type="text" id="systemName" name="systemName" value="Smart Relays">
+            <label for="wifiName">Wi-Fi Name:</label>
+            <input type="text" id="wifiName" name="wifiName" placeholder="Enter Wi-Fi name">
+            <label for="wifiPassword">Wi-Fi Password:</label>
+            <input type="password" id="wifiPassword" name="wifiPassword" placeholder="Enter Wi-Fi password">
+            
+            <div class="time-date-container">
+                <div class="time-container">
+                    <label for="systemTime">Time:</label>
+                    <input type="time" id="systemTime" name="systemTime" value="11:32:45">
+                </div>
+                <div class="date-container">
+                    <label for="systemDate">Date:</label>
+                    <input type="date" id="systemDate" name="systemDate" value="2024-07-23">
+                </div>
+            </div>
+            
+            <div>
+                <input type="checkbox" id="syncTime" name="syncTime">Sync automaticly with internet time
+            </div>
+            <h3>Relay Names</h3>
+            <label for="relayName">Relay 1 Name:</label>
+            <input type="text" id="relayName" name="relayName" value="Relay 1">
+            <button type="submit" class="submit-button">Save Changes</button>
+        </form>
+    </div>
+    
+    
+
+    <div class="settings-form">
+        <h2>Relay 1 - Alarm rules</h2>
+        <form>
+            <h3>Rules</h3>
+            <div class="rule">
+                <div class="rule-detail">
+                    <div class="input-group">
+                        <select class="select-style">
+                            <option value="on">ON</option>
+                            <option value="off">OFF</option>
+                        </select>
+                        <input type="time" name="ruleTime" value="11:32:45" class="time-input">
+                    </div>
+                    <div class="weekdays">
+                        <input type="checkbox" name="ruleDay" value="mon">Mon
+                        <input type="checkbox" name="ruleDay" value="tue">Tue
+                        <input type="checkbox" name="ruleDay" value="wed">Wed
+                        <input type="checkbox" name="ruleDay" value="thu">Thu
+                        <input type="checkbox" name="ruleDay" value="fri">Fri
+                        <input type="checkbox" name="ruleDay" value="sat">Sat
+                        <input type="checkbox" name="ruleDay" value="sun">Sun
+                    </div>
+                </div>
+                <button class="delete-rule">Delete</button>
+            </div>
+            <div class="rules-list">
+                <div class="rule">
+                    <div class="rule-detail">
+                        <div class="input-group">
+                            <select class="select-style">
+                                <option value="on">ON</option>
+                                <option value="off">OFF</option>
+                            </select>
+                            <input type="time" name="ruleTime" value="11:32:45" class="time-input">
+                        </div>
+                        <div class="weekdays">
+                            <input type="checkbox" name="ruleDay" value="mon">Mon
+                            <input type="checkbox" name="ruleDay" value="tue">Tue
+                            <input type="checkbox" name="ruleDay" value="wed">Wed
+                            <input type="checkbox" name="ruleDay" value="thu">Thu
+                            <input type="checkbox" name="ruleDay" value="fri">Fri
+                            <input type="checkbox" name="ruleDay" value="sat">Sat
+                            <input type="checkbox" name="ruleDay" value="sun">Sun
+                        </div>
+                    </div>
+                    <button class="add-rule">Add Rule</button>
+                </div>
+            </div>
+        </form>
+        <button type="submit" class="submit-button">Save Changes</button>
+    </div>
+
+    <div class="settings-form">
+        <h2>Network Info</h2>
+        <label>Wi-Fi Mode:</label>
+        <p>Connected</p>
+        <label>IP Address:</label>
+        <p>123.123.123.123</p>
+        <label>Gateway:</label>
+        <p>123.123.123.1</p>
+        <label>DNS:</label>
+        <p>123.123.123.1</p>
+    </div>
+</body>
+
+</html>
