@@ -1,6 +1,6 @@
 # Smart Relays API Backend
 
-This API backend serves as the interface between the frontend interface for controlling smart relays and the underlying system managing the relay devices. Below are the details of the requests you need to make to interact with the backend and the corresponding responses.
+This API backend serves as the interface between the frontend interface for controlling smart relays and the underlying system managing the relay devices. Below are the details of the requests you need to make to interact with the backend, the corresponding responses, and possible error responses.
 
 ## Get All Relays
 
@@ -9,7 +9,7 @@ This API backend serves as the interface between the frontend interface for cont
 - **Endpoint**: `/api/all-relays`
 - **Method**: GET
 
-### Response
+### Successful Response
 
 - **Status**: 200 OK
 - **Body**:
@@ -42,7 +42,7 @@ This API backend serves as the interface between the frontend interface for cont
   }
   ```
 
-### Response
+### Successful Response
 
 - **Status**: 200 OK
 - **Body**:
@@ -54,14 +54,32 @@ This API backend serves as the interface between the frontend interface for cont
   }
   ```
 
+### Error Responses
+
+- **Status**: 400 Bad Request
+- **Body**:
+  ```json
+  {
+      "error": "Missing or invalid parameters"
+  }
+  ```
+
+- **Status**: 404 Not Found
+- **Body**:
+  ```json
+  {
+      "error": "Relay not found"
+  }
+  ```
+
 ## Current System Settings Retrieval
 
 ### Request
 
-- **Endpoint**: `/api/current-settings`
+- **Endpoint**: `/api/settings`
 - **Method**: GET
 
-### Response
+### Successful Response
 
 - **Status**: 200 OK
 - **Body**:
@@ -101,13 +119,23 @@ This API backend serves as the interface between the frontend interface for cont
   }
   ```
 
-### Response
+### Successful Response
 
 - **Status**: 200 OK
 - **Body**:
   ```json
   {
       "message": "General settings updated successfully"
+  }
+  ```
+
+### Error Responses
+
+- **Status**: 400 Bad Request
+- **Body**:
+  ```json
+  {
+      "error": "Invalid data provided"
   }
   ```
 
@@ -118,7 +146,7 @@ This API backend serves as the interface between the frontend interface for cont
 - **Endpoint**: `/api/relay-alarms/:relayId`
 - **Method**: GET
 
-### Response
+### Successful Response
 
 - **Status**: 200 OK
 - **Body**:
@@ -137,6 +165,16 @@ This API backend serves as the interface between the frontend interface for cont
           "days": ["tue", "thu", "sat", "sun"]
       }
   ]
+  ```
+
+### Error Response
+
+- **Status**: 404 Not Found
+- **Body**:
+  ```json
+  {
+      "error": "Relay not found"
+  }
   ```
 
 ## Relay Alarm Rules Update
@@ -161,7 +199,7 @@ This API backend serves as the interface between the frontend interface for cont
   ]
   ```
 
-### Response
+### Successful Response
 
 - **Status**: 200 OK
 - **Body**:
@@ -171,6 +209,26 @@ This API backend serves as the interface between the frontend interface for cont
   }
   ```
 
+### Error Responses
+
+- **Status**: 404 Not Found
+- **Body**:
+  ```json
+  {
+      "error": "Relay not found"
+  }
+  ```
+
+- **Status**: 400 Bad Request
+- **Body**:
+  ```json
+  {
+      "error": "Invalid data provided"
+  }
+  ```
+
+
+
 ## Network Information Retrieval
 
 ### Request
@@ -178,7 +236,7 @@ This API backend serves as the interface between the frontend interface for cont
 - **Endpoint**: `/api/network-info`
 - **Method**: GET
 
-### Response
+### Successful Response
 
 - **Status**: 200 OK
 - **Body**:
@@ -198,7 +256,7 @@ This API backend serves as the interface between the frontend interface for cont
 - **Endpoint**: `/api/server-time`
 - **Method**: GET
 
-### Response
+### Successful Response
 
 - **Status**: 200 OK
 - **Body**:
@@ -224,12 +282,22 @@ Example using `curl`:
 curl -X POST -F 'firmware=@path_to_firmware_file.bin' http://yourapi.com/api/update-firmware
 ```
 
-### Response
+### Successful Response
 
 - **Status**: 200 OK
 - **Body**:
   ```json
   {
       "message": "Firmware updated successfully"
+  }
+  ```
+
+### Error Responses
+
+- **Status**: 400 Bad Request
+- **Body**:
+  ```json
+  {
+      "error": "Invalid firmware file"
   }
   ```
