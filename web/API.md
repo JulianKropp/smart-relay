@@ -207,3 +207,29 @@ This API backend serves as the interface between the frontend interface for cont
       "serverTime": "2024-05-13T10:30:00Z"
   }
   ```
+
+
+
+## Firmware Update
+
+### Request
+
+- **Endpoint**: `/api/update-firmware`
+- **Method**: POST
+- **Content-Type**: `multipart/form-data`
+- **Body**: Contains the file data for the firmware (.bin file).
+
+Example using `curl`:
+```bash
+curl -X POST -F 'firmware=@path_to_firmware_file.bin' http://yourapi.com/api/update-firmware
+```
+
+### Response
+
+- **Status**: 200 OK
+- **Body**:
+  ```json
+  {
+      "message": "Firmware updated successfully"
+  }
+  ```
