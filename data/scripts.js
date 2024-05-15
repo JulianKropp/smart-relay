@@ -1,9 +1,16 @@
 document.addEventListener("DOMContentLoaded", function () {
+    const relayList = document.getElementById("relay-list");
+    relayList.innerHTML = "<p>Loading...</p>";
+
     // Function to fetch relay data from the API and update the UI
     function fetchRelaysAndUpdateUI() {
         fetch("/api/all-relays")
             .then(response => response.json())
             .then(relays => {
+                if(relayList.innerHTML === "<p>Loading...</p>") {
+                    relayList.innerHTML = "";
+                }
+
                 if (!relays) {
                     // set there are no relays setup.
                     const relayList = document.getElementById("relay-list");
@@ -34,6 +41,8 @@ document.addEventListener("DOMContentLoaded", function () {
                                 <label class="toggle-label" for="relaySwitch${relay.id}"></label>
                             </div>
                         `;
+
+                        relayList.appendChild(relayControl);
                     }
 
 
@@ -46,7 +55,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 console.error('Error fetching relay data:');
 
                 // clear all relay data
-                const relayList = document.getElementById("relay-list");
                 relayList.innerHTML = "<p>Error fetching relay data</p>";
             });
     }
