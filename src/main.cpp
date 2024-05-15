@@ -27,9 +27,9 @@ void handleFileRead(String path)
         server.streamFile(file, contentType);
         file.close();
     }
-    else if (SPIFFS.exists(path + ".html"))
+    else if (SPIFFS.exists(path + "/index.html"))
     {
-        path = path + ".html";
+        path = path + "/index.html";
         File file = SPIFFS.open(path, "r");
         String contentType = getContentType(path); // Inhaltstyp basierend auf der Dateierweiterung bestimmen
         server.streamFile(file, contentType);
