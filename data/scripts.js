@@ -2,71 +2,93 @@ document.addEventListener("DOMContentLoaded", function () {
     const relayList = document.getElementById("relay-list");
     relayList.innerHTML = "<p>Loading...</p>";
 
-    // Function to fetch relay data from the API and update the UI
-    function fetchRelaysAndUpdateUI() {
-        fetch("/api/all-relays")
+    // Function to fetch relay data from the API
+    function fetchRelays() {
+        return fetch("/api/all-relays")
             .then(response => response.json())
-            .then(relays => {
-                if(relayList.innerHTML === "<p>Loading...</p>") {
-                    relayList.innerHTML = "";
-                }
-
-                if (!relays) {
-                    // set there are no relays setup.
-                    const relayList = document.getElementById("relay-list");
-                    relayList.innerHTML = "<p>No relays found</p>";
-                }
-
-                relays.forEach(relay => {
-                    const switchElement = document.getElementById(`relaySwitch${relay.id}`);
-
-                    // if the switch element is not found, add it
-                    if (!switchElement) {
-                        /*
-                            <div class="relay-control" id="relay-control1">
-                                <h2>Relay 1</h2>
-                                <div class="switch">
-                                    <input type="checkbox" id="relaySwitch1" class="relay-checkbox">
-                                    <label class="toggle-label" for="relaySwitch1"></label>
-                                </div>
-                            </div>
-                        */ 
-                        const relayControl = document.createElement("div");
-                        relayControl.classList.add("relay-control");
-                        relayControl.id = `relay-control${relay.id}`;
-                        relayControl.innerHTML = `
-                            <h2>Relay ${relay.id}</h2>
-                            <div class="switch">
-                                <input type="checkbox" id="relaySwitch${relay.id}" class="relay-checkbox">
-                                <label class="toggle-label" for="relaySwitch${relay.id}"></label>
-                            </div>
-                        `;
-
-                        relayList.appendChild(relayControl);
-                    }
-
-
-                    if (switchElement) {
-                        switchElement.checked = (relay.state === "on");
-                    }
-                });
-            })
             .catch(error => {
-                console.error('Error fetching relay data:');
-
-                // clear all relay data
+                console.error('Error fetching relay data:', error);
                 relayList.innerHTML = "<p>Error fetching relay data</p>";
+                throw error;
             });
     }
 
-    // Initial fetch on page load
-    fetchRelaysAndUpdateUI();
+    // Function to update the UI with the fetched relay data
+    function updateUI(relays) {
+        if (relayList.innerHTML === "<p>Loading...</p>") {
+            relayList.innerHTML = "";
+        }
 
-    // Function to continuously update relay data every second
-    function updateRelayData() {
-        setInterval(fetchRelaysAndUpdateUI, 1000);
+        if (!relays || relays.length === 0) {
+            relayList.innerHTML = "<p>No relays found</p>";
+            return;
+        }
+
+        const currentRelayIds = new Set(relays.map(relay => relay.id));
+
+        // Remove non-existent relays
+        document.querySelectorAll('.relay-control').forEach(node => {
+            const nodeId = node.id.replace('relay-control', '');
+            if (!currentRelayIds.has(parseInt(nodeId))) {
+                node.remove();
+            }
+        });
+
+        relays.forEach(relay => {
+            let relayControl = document.getElementById(`relay-control${relay.id}`);
+
+            // If the relay element is not found, add it
+            if (!relayControl) {
+                relayControl = document.createElement("div");
+                relayControl.classList.add("relay-control");
+                relayControl.id = `relay-control${relay.id}`;
+                relayControl.innerHTML = `
+                    <h2>Relay ${relay.id}</h2>
+                    <div class="switch">
+                        <input type="checkbox" id="relaySwitch${relay.id}" class="relay-checkbox">
+                        <label class="toggle-label" for="relaySwitch${relay.id}"></label>
+                    </div>
+                `;
+
+                relayList.appendChild(relayControl);
+
+                // Add event listener to the switch
+                const relaySwitch = document.getElementById(`relaySwitch${relay.id}`);
+                relaySwitch.addEventListener('change', function () {
+                    const newState = this.checked ? 'on' : 'off';
+                    const data = { relayId: relay.id, state: newState };
+
+                    fetch('/api/relay-control', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(data)
+                    })
+                        .then(response => response.json())
+                        .then(data => console.log('Success:', data))
+                        .catch(error => console.error('Error:', error));
+                });
+            }
+
+            // Update the state of the switch if the relay already exists
+            const switchElement = document.getElementById(`relaySwitch${relay.id}`);
+            if (switchElement) {
+                switchElement.checked = relay.state === "on";
+            }
+        });
     }
 
-    // Call the function to start updating relay data
+    // Fetch data initially when the page loads and update UI
+    fetchRelays().then(updateUI);
+
+    // Function to continuously update relay data
+    function updateRelayData() {
+        setInterval(() => {
+            fetchRelays().then(updateUI);
+        }, 1000);
+    }
+
+    // Call the function to start data updating
     updateRelayData();
 });
