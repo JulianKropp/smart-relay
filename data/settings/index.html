@@ -24,8 +24,8 @@
 
 
     <div id="general-settings" class="settings-form">
+        <h2 id="general-settings-heading">General Settings</h2>
         <form id="general-settings-form">
-            <h2 id="general-settings-heading">General Settings</h2>
             <label for="system-name">Name:</label>
             <input type="text" id="system-name" name="systemName" value="Smart Relays">
             <label for="wifi-name">Wi-Fi Name:</label>
@@ -48,17 +48,17 @@
                 <input type="checkbox" id="sync-time-checkbox" name="syncTime">
                 <label for="sync-time-checkbox">Sync automatically with internet time</label>
             </div>
-            <h3 id="relay-names-heading">Relay Names</h3>
-            <label for="relay-name-1">Relay 1 Name:</label>
-            <input type="text" id="relay-name-1" name="relayName1" value="Relay 1">
-            <label for="relay-name-2">Relay 2 Name:</label>
-            <input type="text" id="relay-name-2" name="relayName2" value="Relay 2">
+            <div id="relay-names">
+                <h3 id="relay-names-heading">Relay Names</h3>
+            </div>
             <button type="submit" id="save-general-settings" class="submit-button">Save Changes</button>
         </form>
 
-        <h3 id="update-heading">Update</h3>
-        <input type="file" id="update-file" name="file" accept=".bin">
-        <button type="submit" id="update-button" class="submit-button">Update</button>
+        <div id="update">
+            <h3 id="update-heading">Update</h3>
+            <input type="file" id="update-file" name="file" accept=".bin">
+            <button type="submit" id="update-button" class="submit-button">Update</button>
+        </div>
     </div>
 
     <div id="network-info" class="settings-form">

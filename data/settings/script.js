@@ -10,6 +10,45 @@ document.addEventListener("DOMContentLoaded", function() {
             });
     }
 
+    // Function to create name elements for a given relay
+    function createNameElement(relay) {
+        /*
+        <div id="relay-name-1-container">
+            <label for="relay-name-1">Relay 1 Name:</label>
+            <input type="text" id="relay-name-1" name="relayName1" value="Relay 1">
+        </div>
+        */
+        const nameDiv = document.createElement('div');
+        nameDiv.id = `relay-name-${relay.id}-container`;
+
+        const label = document.createElement('label');
+        label.htmlFor = `relay-name-${relay.id}`;
+        label.textContent = `Relay ${relay.id} Name:`;
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.id = `relay-name-${relay.id}`;
+        input.name = `relayName${relay.id}`;
+        input.value = relay.name;
+
+        nameDiv.appendChild(label);
+        nameDiv.appendChild(input);
+
+        return nameDiv;
+    }
+
+    // Function to update the relay names section
+    function updateRelayNames(relays) {
+        const relayNamesDiv = document.getElementById('relay-names');
+
+        relays.forEach(relay => {
+            const nameElement = createNameElement(relay);
+            relayNamesDiv.appendChild(nameElement);
+        });
+    }
+
+
+
     // Function to create rule elements for a given relay and rule data
     function createRuleElement(relayId, ruleData, ruleIndex) {
         const templateHtml = document.getElementById('relay-alarm-rule-template').innerHTML;
@@ -99,6 +138,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 .then(response => response.json())
                 .then(relays => {
                     updateRelayAlarmRules(relays);
+                    updateRelayNames(relays);
                 })
                 .catch(error => console.error('Error fetching relays:', error));
         })
