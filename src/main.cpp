@@ -95,6 +95,28 @@ void handleSystemSettings()
     server.send(200, "application/json", json);
 }
 
+void handleGetRelayAlarms()
+{
+    if (!server.hasArg("relayId"))
+    {
+        server.send(400, "application/json", "{\"error\": \"Missing relayId parameter\"}");
+        return;
+    }
+
+    int relayId = server.arg("relayId").toInt();
+    if (relayId <= 0)
+    {
+        server.send(404, "application/json", "{\"error\": \"Relay not found\"}");
+        return;
+    }
+
+    String json = "["
+                  "{\"id\": 1, \"state\": \"on\", \"time\": \"06:00:00\", \"days\": [\"mon\", \"wed\", \"fri\"]},"
+                  "{\"id\": 2, \"state\": \"off\", \"time\": \"22:00:00\", \"days\": [\"tue\", \"thu\", \"sat\", \"sun\"]}"
+                  "]";
+    server.send(200, "application/json", json);
+}
+
 void setup()
 {
     Serial.begin(115200);
@@ -118,6 +140,7 @@ void setup()
     server.on("/api/all-relays", HTTP_GET, handleGetAllRelays);
     server.on("/api/relay-control", HTTP_POST, handleRelayControl);
     server.on("/api/settings", HTTP_GET, handleSystemSettings);
+    server.on("/api/relay-alarms", HTTP_GET, handleGetRelayAlarms);
 
     // Starten des Servers
     server.begin();

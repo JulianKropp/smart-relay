@@ -9,109 +9,68 @@
 </head>
 
 <body>
-    <div class="header">
-        <h1>Smart Relays</h1>
-        <a href="/" class="back-button">Back</a>
+    <div id="header" class="header">
+        <h1 id="title">Smart Relays</h1>
+        <a href="/" id="back-button" class="back-button">Back</a>
     </div>
-    <div class="settings-form">
-        <form>
-            <h2>General Settings</h2>
-            <label for="systemName">Name:</label>
-            <input type="text" id="systemName" name="systemName" value="Smart Relays">
-            <label for="wifiName">Wi-Fi Name:</label>
-            <input type="text" id="wifiName" name="wifiName" placeholder="Enter Wi-Fi name">
-            <label for="wifiPassword">Wi-Fi Password:</label>
-            <input type="password" id="wifiPassword" name="wifiPassword" placeholder="Enter Wi-Fi password">
-            
-            <div class="time-date-container">
-                <div class="time-container">
-                    <label for="systemTime">Time:</label>
-                    <input type="time" id="systemTime" name="systemTime" value="11:32:45">
+
+
+
+    <div id="relay-alarm-rules" class="settings-form">
+        <h2 id="relay-heading">Alarm rules</h2>
+    </div>
+
+
+
+
+    <div id="general-settings" class="settings-form">
+        <form id="general-settings-form">
+            <h2 id="general-settings-heading">General Settings</h2>
+            <label for="system-name">Name:</label>
+            <input type="text" id="system-name" name="systemName" value="Smart Relays">
+            <label for="wifi-name">Wi-Fi Name:</label>
+            <input type="text" id="wifi-name" name="wifiName" placeholder="Enter Wi-Fi name">
+            <label for="wifi-password">Wi-Fi Password:</label>
+            <input type="password" id="wifi-password" name="wifiPassword" placeholder="Enter Wi-Fi password">
+
+            <div id="time-date" class="time-date-container">
+                <div id="time" class="time-container">
+                    <label for="system-time">Time:</label>
+                    <input type="time" id="system-time" name="systemTime" value="11:32:45">
                 </div>
-                <div class="date-container">
-                    <label for="systemDate">Date:</label>
-                    <input type="date" id="systemDate" name="systemDate" value="2024-07-23">
+                <div id="date" class="date-container">
+                    <label for="system-date">Date:</label>
+                    <input type="date" id="system-date" name="systemDate" value="2024-07-23">
                 </div>
             </div>
-            
-            <div>
-                <input type="checkbox" id="syncTime" name="syncTime">Sync automaticly with internet time
+
+            <div id="sync-time">
+                <input type="checkbox" id="sync-time-checkbox" name="syncTime">
+                <label for="sync-time-checkbox">Sync automatically with internet time</label>
             </div>
-            <h3>Relay Names</h3>
-            <label for="relayName">Relay 1 Name:</label>
-            <input type="text" id="relayName" name="relayName" value="Relay 1">
-            <button type="submit" class="submit-button">Save Changes</button>
+            <h3 id="relay-names-heading">Relay Names</h3>
+            <label for="relay-name-1">Relay 1 Name:</label>
+            <input type="text" id="relay-name-1" name="relayName1" value="Relay 1">
+            <label for="relay-name-2">Relay 2 Name:</label>
+            <input type="text" id="relay-name-2" name="relayName2" value="Relay 2">
+            <button type="submit" id="save-general-settings" class="submit-button">Save Changes</button>
         </form>
 
-        <h3>Update</h3>
-        <input type="file" id="file" name="file" accept=".bin">
-        <button type="submit" class="submit-button">Update</button>
-    </div>
-    
-    
-
-    <div class="settings-form">
-        <h2>Relay 1 - Alarm rules</h2>
-        <form>
-            <h3>Rules</h3>
-            <div class="rule">
-                <div class="rule-detail">
-                    <div class="input-group">
-                        <select class="select-style">
-                            <option value="on">ON</option>
-                            <option value="off">OFF</option>
-                        </select>
-                        <input type="time" name="ruleTime" value="11:32:45" class="time-input">
-                    </div>
-                    <div class="weekdays">
-                        <input type="checkbox" name="ruleDay" value="mon">Mon
-                        <input type="checkbox" name="ruleDay" value="tue">Tue
-                        <input type="checkbox" name="ruleDay" value="wed">Wed
-                        <input type="checkbox" name="ruleDay" value="thu">Thu
-                        <input type="checkbox" name="ruleDay" value="fri">Fri
-                        <input type="checkbox" name="ruleDay" value="sat">Sat
-                        <input type="checkbox" name="ruleDay" value="sun">Sun
-                    </div>
-                </div>
-                <button class="delete-rule">Delete</button>
-            </div>
-            <div class="rules-list">
-                <div class="rule">
-                    <div class="rule-detail">
-                        <div class="input-group">
-                            <select class="select-style">
-                                <option value="on">ON</option>
-                                <option value="off">OFF</option>
-                            </select>
-                            <input type="time" name="ruleTime" value="11:32:45" class="time-input">
-                        </div>
-                        <div class="weekdays">
-                            <input type="checkbox" name="ruleDay" value="mon">Mon
-                            <input type="checkbox" name="ruleDay" value="tue">Tue
-                            <input type="checkbox" name="ruleDay" value="wed">Wed
-                            <input type="checkbox" name="ruleDay" value="thu">Thu
-                            <input type="checkbox" name="ruleDay" value="fri">Fri
-                            <input type="checkbox" name="ruleDay" value="sat">Sat
-                            <input type="checkbox" name="ruleDay" value="sun">Sun
-                        </div>
-                    </div>
-                    <button class="add-rule">Add Rule</button>
-                </div>
-            </div>
-        </form>
-        <button type="submit" class="submit-button">Save Changes</button>
+        <h3 id="update-heading">Update</h3>
+        <input type="file" id="update-file" name="file" accept=".bin">
+        <button type="submit" id="update-button" class="submit-button">Update</button>
     </div>
 
-    <div class="settings-form">
-        <h2>Network Info</h2>
-        <label>Wi-Fi Mode:</label>
-        <p>Connected</p>
-        <label>IP Address:</label>
-        <p>123.123.123.123</p>
-        <label>Gateway:</label>
-        <p>123.123.123.1</p>
-        <label>DNS:</label>
-        <p>123.123.123.1</p>
+    <div id="network-info" class="settings-form">
+        <h2 id="network-info-heading">Network Info</h2>
+        <label for="wifi-status">Wi-Fi Mode:</label>
+        <p id="wifi-status">Connected</p>
+        <label for="ip-status">IP Address:</label>
+        <p id="ip-status">123.123.123.123</p>
+        <label for="gateway-status">Gateway:</label>
+        <p id="gateway-status">123.123.123.1</p>
+        <label for="dns-status">DNS:</label>
+        <p id="dns-status">123.123.123.1</p>
     </div>
     <script src="/settings/script.js"></script>
 </body>

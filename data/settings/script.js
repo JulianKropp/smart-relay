@@ -1,137 +1,106 @@
 document.addEventListener("DOMContentLoaded", function() {
-    // Fetch current system settings
-    fetch('/api/settings')
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById('systemName').value = data.systemName;
-            document.getElementById('wifiName').value = data.wifiName;
-            document.getElementById('systemTime').value = data.systemTime;
-            document.getElementById('systemDate').value = data.systemDate;
-            document.getElementById('syncTime').checked = data.syncTime;
-            document.getElementById('relayName').value = data.relayNames.relay1;
-        })
-        .catch(error => console.error('Error fetching settings:', error));
-
-    // Handle general settings form submission
-    document.querySelector('.settings-form form').addEventListener('submit', function(event) {
-        event.preventDefault();
-        const settingsData = {
-            systemName: document.getElementById('systemName').value,
-            wifiName: document.getElementById('wifiName').value,
-            wifiPassword: document.getElementById('wifiPassword').value,
-            systemTime: document.getElementById('systemTime').value,
-            systemDate: document.getElementById('systemDate').value,
-            syncTime: document.getElementById('syncTime').checked,
-            relayNames: {
-                relay1: document.getElementById('relayName').value,
-                relay2: "Relay 2" // Assuming there's another relay as per the API structure
-            }
-        };
-
-        fetch('/api/settings', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(settingsData)
-        })
-        .then(response => response.json())
-        .then(data => alert(data.message))
-        .catch(error => console.error('Error updating settings:', error));
-    });
-
-    // Handle firmware update submission
-    document.querySelector('#file').addEventListener('change', function(event) {
-        const fileInput = event.target;
-        const formData = new FormData();
-        formData.append('firmware', fileInput.files[0]);
-
-        fetch('/api/update-firmware', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => alert(data.message))
-        .catch(error => console.error('Error updating firmware:', error));
-    });
-
-    // Fetch and display network information
-    fetch('/api/network-info')
-        .then(response => response.json())
-        .then(data => {
-            document.querySelector('.settings-form h2 + label + p').textContent = data.wifiMode;
-            document.querySelector('.settings-form h2 + label + p + label + p').textContent = data.ipAddress;
-            document.querySelector('.settings-form h2 + label + p + label + p + label + p').textContent = data.gateway;
-            document.querySelector('.settings-form h2 + label + p + label + p + label + p + label + p').textContent = data.dns;
-        })
-        .catch(error => console.error('Error fetching network info:', error));
-
-    // Fetch and display all relays
-    fetch('/api/all-relays')
-        .then(response => response.json())
-        .then(data => {
-            // Assuming there's a place in the DOM to display relay info
-            const relaysContainer = document.createElement('div');
-            data.forEach(relay => {
-                const relayElement = document.createElement('div');
-                relayElement.textContent = `Relay ${relay.id}: ${relay.name} is ${relay.state}`;
-                relaysContainer.appendChild(relayElement);
+    // Function to load the HTML template
+    function loadTemplate() {
+        return fetch('/settings/rart.html')
+            .then(response => response.text())
+            .then(templateText => {
+                const template = document.createElement('div');
+                template.innerHTML = templateText;
+                document.body.appendChild(template);
             });
-            document.body.appendChild(relaysContainer);
-        })
-        .catch(error => console.error('Error fetching relays:', error));
+    }
 
-    // Fetch relay 1 alarms and populate the form
-    fetch('/api/relay-alarms/1')
-        .then(response => response.json())
-        .then(data => {
-            const rulesList = document.querySelector('.rules-list');
-            rulesList.innerHTML = ''; // Clear existing rules
-            data.forEach(rule => {
-                const ruleElement = document.createElement('div');
-                ruleElement.className = 'rule';
-                ruleElement.innerHTML = `
-                    <div class="rule-detail">
-                        <div class="input-group">
-                            <select class="select-style">
-                                <option value="on" ${rule.state === 'on' ? 'selected' : ''}>ON</option>
-                                <option value="off" ${rule.state === 'off' ? 'selected' : ''}>OFF</option>
-                            </select>
-                            <input type="time" name="ruleTime" value="${rule.time}" class="time-input">
-                        </div>
-                        <div class="weekdays">
-                            ${['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'].map(day => `
-                                <input type="checkbox" name="ruleDay" value="${day}" ${rule.days.includes(day) ? 'checked' : ''}>${day.charAt(0).toUpperCase() + day.slice(1)}
-                            `).join('')}
-                        </div>
-                    </div>
-                    <button class="delete-rule">Delete</button>
-                `;
-                rulesList.appendChild(ruleElement);
-            });
-        })
-        .catch(error => console.error('Error fetching relay alarms:', error));
+    // Function to create rule elements for a given relay and rule data
+    function createRuleElement(relayId, ruleData, ruleIndex) {
+        const templateHtml = document.getElementById('relay-alarm-rule-template').innerHTML;
+        const replacedHtml = templateHtml
+            .replace(/\$\{relayId\}/g, relayId)
+            .replace(/\$\{ruleIndex\}/g, ruleIndex);
 
-    // Handle alarm rules form submission
-    document.querySelector('.settings-form form').addEventListener('submit', function(event) {
-        event.preventDefault();
-        const rules = [];
-        document.querySelectorAll('.rules-list .rule').forEach(ruleElement => {
-            const state = ruleElement.querySelector('.select-style').value;
-            const time = ruleElement.querySelector('.time-input').value;
-            const days = Array.from(ruleElement.querySelectorAll('input[name="ruleDay"]:checked')).map(input => input.value);
-            rules.push({ state, time, days });
+        const template = document.createElement('div');
+        template.innerHTML = replacedHtml;
+        const ruleDiv = template.firstElementChild;
+
+        const select = ruleDiv.querySelector('.select-style');
+        select.value = ruleData.state;
+
+        const timeInput = ruleDiv.querySelector('.time-input');
+        timeInput.value = ruleData.time;
+
+        const days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+        days.forEach(day => {
+            const checkbox = ruleDiv.querySelector(`input[value="${day}"]`);
+            checkbox.checked = ruleData.days.includes(day);
         });
 
-        fetch('/api/relay-alarm/1', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(rules)
+        return ruleDiv;
+    }
+
+    // Function to update the relay-alarm-rules section
+    function updateRelayAlarmRules(relays) {
+        const relayAlarmRulesDiv = document.getElementById('relay-alarm-rules');
+
+        relays.forEach((relay, relayIndex) => {
+            const relayDiv = document.createElement('div');
+            relayDiv.id = `relay-${relay.id}-alarm-rules`;
+
+            const relayHeading = document.createElement('h2');
+            relayHeading.id = `relay-${relay.id}-heading`;
+            relayHeading.textContent = `${relay.name} - Alarm rules`;
+
+            const relayForm = document.createElement('form');
+            relayForm.id = `relay-${relay.id}-form`;
+
+            const rulesHeading = document.createElement('h3');
+            rulesHeading.id = `relay-${relay.id}-rules-heading`;
+            rulesHeading.textContent = `Rules: ${relay.name}`;
+
+            relayForm.appendChild(rulesHeading);
+
+            let ruleIndexTemp = 0;
+            fetch(`/api/relay-alarms?relayId=${relay.id}`)
+                .then(response => response.json())
+                .then(alarmRules => {
+                    alarmRules.forEach((rule, ruleIndex) => {
+                        const ruleElement = createRuleElement(relay.id, rule, ruleIndex + 1);
+                        relayForm.appendChild(ruleElement);
+                        ruleIndexTemp = ruleIndex + 1; // Increment ruleIndexTemp correctly
+                    });
+
+                    // Create a new rule element for the relay for adding a new rule
+                    const newRuleElement = createRuleElement(relay.id, { state: 'on', time: '00:00:00', days: [] }, ruleIndexTemp + 1);
+
+                    // Edit Delete button to Add Rule button with class add-rule
+                    const newButton = newRuleElement.querySelector(`#relay-${relay.id}-delete-rule-${ruleIndexTemp + 1}`);
+                    newButton.textContent = 'Add Rule';
+                    newButton.classList.add('add-rule');
+
+                    // Append the new rule element to the relay form
+                    relayForm.appendChild(newRuleElement);
+
+                    // Create save button
+                    const saveButton = document.createElement('button');
+                    saveButton.type = 'submit';
+                    saveButton.id = `save-relay-${relay.id}-rules`;
+                    saveButton.classList.add('submit-button');
+                    saveButton.textContent = 'Save Changes';
+
+                    relayForm.appendChild(saveButton);
+                    relayDiv.appendChild(relayForm);
+                    relayAlarmRulesDiv.appendChild(relayDiv);
+                });
+        });
+    }
+
+    // Fetch and load the HTML template, then fetch relays and update the relay-alarm-rules section
+    loadTemplate()
+        .then(() => {
+            fetch('/api/all-relays')
+                .then(response => response.json())
+                .then(relays => {
+                    updateRelayAlarmRules(relays);
+                })
+                .catch(error => console.error('Error fetching relays:', error));
         })
-        .then(response => response.json())
-        .then(data => alert(data.message))
-        .catch(error => console.error('Error updating relay alarms:', error));
-    });
+        .catch(error => console.error('Error loading template:', error));
 });
