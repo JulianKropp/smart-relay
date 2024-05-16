@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Function to update the UI with the fetched relay data
     function updateUI(relays) {
-        if (relayList.innerHTML === "<p>Loading...</p>") {
+        if (relayList.innerHTML === "<p>Loading...</p>" || relayList.innerHTML === "<p>Error fetching relay data</p>") {
             relayList.innerHTML = "";
         }
 
@@ -43,7 +43,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 relayControl.classList.add("relay-control");
                 relayControl.id = `relay-control${relay.id}`;
                 relayControl.innerHTML = `
-                    <h2>Relay ${relay.id}</h2>
+                    <h2 id="relaySwitchName${relay.id}">${relay.name}</h2>
                     <div class="switch">
                         <input type="checkbox" id="relaySwitch${relay.id}" class="relay-checkbox">
                         <label class="toggle-label" for="relaySwitch${relay.id}"></label>
@@ -69,6 +69,12 @@ document.addEventListener("DOMContentLoaded", function () {
                         .then(data => console.log('Success:', data))
                         .catch(error => console.error('Error:', error));
                 });
+            }
+
+            // Update the name of the switch
+            const switchName = document.getElementById(`relaySwitchName${relay.id}`);
+            if (switchName.textContent !== relay.name) {
+                switchName.textContent = relay.name;
             }
 
             // Update the state of the switch if the relay already exists
