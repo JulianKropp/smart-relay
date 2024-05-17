@@ -18,6 +18,7 @@
 
     <div id="relay-alarm-rules" class="settings-form">
         <h2 id="relay-heading">Alarm rules</h2>
+        <!--rart.html will be inserted here-->
     </div>
 
 
@@ -25,34 +26,32 @@
 
     <div id="general-settings" class="settings-form">
         <h2 id="general-settings-heading">General Settings</h2>
-        <form id="general-settings-form">
-            <label for="system-name">Name:</label>
-            <input type="text" id="system-name" name="systemName" value="Smart Relays">
-            <label for="wifi-name">Wi-Fi Name:</label>
-            <input type="text" id="wifi-name" name="wifiName" placeholder="Enter Wi-Fi name">
-            <label for="wifi-password">Wi-Fi Password:</label>
-            <input type="password" id="wifi-password" name="wifiPassword" placeholder="Enter Wi-Fi password">
+        <label for="system-name">Name:</label>
+        <input type="text" id="system-name" name="systemName" value="Smart Relays">
+        <label for="wifi-name">Wi-Fi Name:</label>
+        <input type="text" id="wifi-name" name="wifiName" placeholder="Enter Wi-Fi name">
+        <label for="wifi-password">Wi-Fi Password:</label>
+        <input type="password" id="wifi-password" name="wifiPassword" placeholder="Enter Wi-Fi password">
 
-            <div id="time-date" class="time-date-container">
-                <div id="time" class="time-container">
-                    <label for="system-time">Time:</label>
-                    <input type="time" id="system-time" name="systemTime" value="11:32:45">
-                </div>
-                <div id="date" class="date-container">
-                    <label for="system-date">Date:</label>
-                    <input type="date" id="system-date" name="systemDate" value="2024-07-23">
-                </div>
+        <div id="time-date" class="time-date-container">
+            <div id="time" class="time-container">
+                <label for="system-time">Time:</label>
+                <input type="time" id="system-time" name="systemTime" value="11:32:45">
             </div>
+            <div id="date" class="date-container">
+                <label for="system-date">Date:</label>
+                <input type="date" id="system-date" name="systemDate" value="2024-07-23">
+            </div>
+        </div>
 
-            <div id="sync-time">
-                <input type="checkbox" id="sync-time-checkbox" name="syncTime">
-                <label for="sync-time-checkbox">Sync automatically with internet time</label>
-            </div>
-            <div id="relay-names">
-                <h3 id="relay-names-heading">Relay Names</h3>
-            </div>
-            <button type="submit" id="save-general-settings" class="submit-button">Save Changes</button>
-        </form>
+        <div id="sync-time">
+            <input type="checkbox" id="sync-time-checkbox" name="syncTime">
+            <label for="sync-time-checkbox">Sync automatically with internet time</label>
+        </div>
+        <div id="relay-names">
+            <h3 id="relay-names-heading">Relay Names</h3>
+        </div>
+        <button type="submit" id="save-general-settings" class="submit-button">Save Changes</button>
 
         <div id="update">
             <h3 id="update-heading">Update</h3>

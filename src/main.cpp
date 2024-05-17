@@ -91,7 +91,12 @@ void handleRelayControl()
 
 void handleSystemSettings()
 {
-    String json = "{\"systemName\": \"Smart Relays\", \"wifiName\": \"" + String(ssid) + "\", \"systemTime\": \"11:32:45\", \"systemDate\": \"2024-07-23\", \"syncTime\": true, \"relayNames\": {\"relay1\": \"Relay 1\", \"relay2\": \"Relay 2\"}}";
+    String json = "{\"systemName\": \"Smart Relays\", \"wifiName\": \"" + String(ssid) + "\", \"systemTime\": \"11:32:45\", \"systemDate\": \"2024-07-23\", \"syncTime\": true, \"relayNames\": [{\"id\": 1, \"name\": \"New Relay 1\"},{\"id\": 2,\"name\": \"New Relay 2\"}]}";
+    server.send(200, "application/json", json);
+}
+
+void handleServerTime() {
+    String json = "{\"time\": \"12:00:00\", \"date\": \"2024-07-23\"}";
     server.send(200, "application/json", json);
 }
 
@@ -141,6 +146,7 @@ void setup()
     server.on("/api/relay-control", HTTP_POST, handleRelayControl);
     server.on("/api/settings", HTTP_GET, handleSystemSettings);
     server.on("/api/relay-alarms", HTTP_GET, handleGetRelayAlarms);
+    server.on("/api/server-time", HTTP_GET, handleServerTime);
 
     // Starten des Servers
     server.begin();
