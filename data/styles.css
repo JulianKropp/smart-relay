@@ -317,7 +317,10 @@ button.cancel-delete {
     font-size: 18px;
 }
 
-
+#sync-time {
+    display: flex;
+    align-items: center;
+}
 
 
 

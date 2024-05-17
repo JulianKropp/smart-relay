@@ -322,6 +322,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function onChangeSyncTimeCheckbox() {
         if (document.getElementById("sync-time-checkbox").checked) {
+            //  when checked make the time and date uneditable
+            document.getElementById("system-time").readOnly = true;
+            document.getElementById("system-date").readOnly = true;
+
+            // Sync time every second
             this.syncTimeInterval = setInterval(() => {
                 fetch("/api/server-time")
                     .then(response => response.json())
@@ -342,6 +347,10 @@ document.addEventListener("DOMContentLoaded", function () {
                     });
             }, 1000);
         } else {
+            // when unchecked make the time and date editable
+            document.getElementById("system-time").readOnly = false;
+            document.getElementById("system-date").readOnly = false;
+
             clearInterval(this.syncTimeInterval);
         }
     }
