@@ -181,6 +181,26 @@ body {
     border-radius: 5px;
 }
 
+.confirm-cancel-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.confirm-cancel-buttons button {
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+button.confirm-delete {
+    background-color: red;
+    color: white;
+}
+
+button.cancel-delete {
+    background-color: gray;
+    color: white;
+}
+
 .add-rule {
     background-color: #4CAF50; /* Green */
 }

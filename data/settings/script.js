@@ -12,12 +12,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Function to create name elements for a given relay
     function createNameElement(relay) {
-        /*
-        <div id="relay-name-1-container">
-            <label for="relay-name-1">Relay 1 Name:</label>
-            <input type="text" id="relay-name-1" name="relayName1" value="Relay 1">
-        </div>
-        */
         const nameDiv = document.createElement('div');
         nameDiv.id = `relay-name-${relay.id}-container`;
 
@@ -40,6 +34,10 @@ document.addEventListener("DOMContentLoaded", function() {
     // Function to update the relay names section
     function updateRelayNames(relays) {
         const relayNamesDiv = document.getElementById('relay-names');
+        if (!relayNamesDiv) {
+            console.error('relay-names div not found');
+            return;
+        }
 
         relays.forEach(relay => {
             const nameElement = createNameElement(relay);
@@ -47,11 +45,14 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
-
-
     // Function to create rule elements for a given relay and rule data
-    function createRuleElement(relayId, ruleData, ruleIndex) {
-        const templateHtml = document.getElementById('relay-alarm-rule-template').innerHTML;
+    function createRuleElement(relayId, ruleData, ruleIndex, type="delete") {
+        const templateHtml = document.getElementById('relay-alarm-rule-template')?.innerHTML;
+        if (!templateHtml) {
+            console.error('relay-alarm-rule-template not found');
+            return;
+        }
+
         const replacedHtml = templateHtml
             .replace(/\$\{relayId\}/g, relayId)
             .replace(/\$\{ruleIndex\}/g, ruleIndex);
@@ -72,75 +73,200 @@ document.addEventListener("DOMContentLoaded", function() {
             checkbox.checked = ruleData.days.includes(day);
         });
 
+        // Add event listener for delete button
+        if (type === "delete") {
+            const deleteButton = ruleDiv.querySelector('.delete-rule');
+            deleteButton.addEventListener('click', function() {
+                handleDeleteButtonClick(relayId, ruleIndex, ruleDiv);
+            });
+        }
+
+        // Add event listener for add button
+        if (type === "add") {
+            const addButton = ruleDiv.querySelector('.delete-rule');
+            addButton.classList.remove('delete-rule');
+            addButton.classList.add('add-rule');
+            addButton.textContent = 'Add Rule';
+            addButton.addEventListener('click', function() {
+                handleAddButtonClick(relayId);
+            });
+        }
+
         return ruleDiv;
     }
 
+    // Function to handle add button click
+    function handleAddButtonClick(relayId) {
+        // make api request to add rule
+        fetch(`/api/relay-alarm/${relayId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                state: 'on',
+                time: '00:00:00',
+                days: []
+            })
+        })
+        .then(response => {
+            if (response.ok) {
+                // Add new rule element
+                loadRelays();
+            } else {
+                alert('Failed to add the rule.');
+            }
+        });
+    }
+
+    // Function to handle delete button click
+    function handleDeleteButtonClick(relayId, ruleIndex, ruleDiv) {
+        const deleteButton = ruleDiv.querySelector('.delete-rule');
+        deleteButton.style.display = 'none';
+
+        const confirmButton = document.createElement('button');
+        confirmButton.classList.add('confirm-delete');
+        confirmButton.textContent = 'Confirm';
+
+        const cancelButton = document.createElement('button');
+        cancelButton.classList.add('cancel-delete');
+        cancelButton.textContent = 'Cancel';
+
+        const buttonContainer = document.createElement('div');
+        buttonContainer.classList.add('confirm-cancel-buttons');
+        buttonContainer.appendChild(confirmButton);
+        buttonContainer.appendChild(cancelButton);
+
+        ruleDiv.appendChild(buttonContainer);
+
+        confirmButton.addEventListener('click', function() {
+            fetch(`/api/relay-alarm/${relayId}/${ruleIndex}`, {
+                method: 'DELETE',
+            })
+            .then(response => {
+                if (response.ok) {
+                    loadRelays();
+                } else {
+                    alert('Failed to delete the rule.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred.');
+            });
+        });
+
+        cancelButton.addEventListener('click', function() {
+            buttonContainer.remove();
+            deleteButton.style.display = 'block';
+        });
+    }
+
+    function updateRelayAlarmRules(relay, relayDiv=null) {
+        if (!relayDiv) {
+            relayDiv = document.getElementById(`relay-${relay.id}-form`);
+        }
+
+        if (!relayDiv) {
+            console.error(`relay-${relay.id}-form not found`);
+            return;
+        }
+    
+        fetch(`/api/relay-alarms?relayId=${relay.id}`)
+            .then(response => response.json())
+            .then(alarmRules => {
+                const existingRuleElements = relayDiv.querySelectorAll('.relay-alarm-rule');
+                const existingRuleIds = Array.from(existingRuleElements).map(el => parseInt(el.dataset.ruleIndex, 10));
+                const newRuleIds = alarmRules.map((_, index) => index + 1);
+    
+                // Remove old elements that are no longer present
+                existingRuleElements.forEach(el => {
+                    const ruleIndex = parseInt(el.dataset.ruleIndex, 10);
+                    if (!newRuleIds.includes(ruleIndex)) {
+                        el.remove();
+                    }
+                });
+    
+                // Update existing elements and add new ones
+                alarmRules.forEach((rule, ruleIndex) => {
+                    const ruleId = ruleIndex + 1;
+                    let ruleElement = relayDiv.querySelector(`.relay-alarm-rule[data-rule-index="${ruleId}"]`);
+    
+                    if (ruleElement) {
+                        // Update existing rule element
+                        const select = ruleElement.querySelector('.select-style');
+                        select.value = rule.state;
+    
+                        const timeInput = ruleElement.querySelector('.time-input');
+                        timeInput.value = rule.time;
+    
+                        const days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+                        days.forEach(day => {
+                            const checkbox = ruleElement.querySelector(`input[value="${day}"]`);
+                            checkbox.checked = rule.days.includes(day);
+                        });
+                    } else {
+                        // Create new rule element
+                        ruleElement = createRuleElement(relay.id, rule, ruleId);
+                        relayDiv.appendChild(ruleElement);
+                    }
+                });
+    
+                // Ensure the "Add" button is always at the bottom
+                const addButtonElement = relayDiv.querySelector('.add-rule');
+                if (addButtonElement) {
+                    addButtonElement.remove();
+                }
+    
+                const newRuleElement = createRuleElement(relay.id, { state: 'on', time: '00:00:00', days: [] }, alarmRules.length + 1, "add");
+                relayDiv.appendChild(newRuleElement);
+            });
+    }
+    
+
     // Function to update the relay-alarm-rules section
-    function updateRelayAlarmRules(relays) {
+    function updateAllRelayAlarmRules(relays) {
         const relayAlarmRulesDiv = document.getElementById('relay-alarm-rules');
+        if (!relayAlarmRulesDiv) {
+            console.error('relay-alarm-rules div not found');
+            return;
+        }
 
         relays.forEach((relay, relayIndex) => {
+            const relayMainDiv = document.createElement('div');
+            relayMainDiv.id = `relay-${relay.id}-alarm-rules`;
+
             const relayDiv = document.createElement('div');
-            relayDiv.id = `relay-${relay.id}-alarm-rules`;
-
-            const relayHeading = document.createElement('h2');
-            relayHeading.id = `relay-${relay.id}-heading`;
-            relayHeading.textContent = `${relay.name} - Alarm rules`;
-
-            const relayForm = document.createElement('form');
-            relayForm.id = `relay-${relay.id}-form`;
+            relayDiv.id = `relay-${relay.id}-form`;
 
             const rulesHeading = document.createElement('h3');
             rulesHeading.id = `relay-${relay.id}-rules-heading`;
             rulesHeading.textContent = `Rules: ${relay.name}`;
 
-            relayForm.appendChild(rulesHeading);
+            relayDiv.appendChild(rulesHeading);
 
-            let ruleIndexTemp = 0;
-            fetch(`/api/relay-alarms?relayId=${relay.id}`)
-                .then(response => response.json())
-                .then(alarmRules => {
-                    alarmRules.forEach((rule, ruleIndex) => {
-                        const ruleElement = createRuleElement(relay.id, rule, ruleIndex + 1);
-                        relayForm.appendChild(ruleElement);
-                        ruleIndexTemp = ruleIndex + 1; // Increment ruleIndexTemp correctly
-                    });
+            relayMainDiv.appendChild(relayDiv);
 
-                    // Create a new rule element for the relay for adding a new rule
-                    const newRuleElement = createRuleElement(relay.id, { state: 'on', time: '00:00:00', days: [] }, ruleIndexTemp + 1);
+            relayAlarmRulesDiv.appendChild(relayMainDiv);
 
-                    // Edit Delete button to Add Rule button with class add-rule
-                    const newButton = newRuleElement.querySelector(`#relay-${relay.id}-delete-rule-${ruleIndexTemp + 1}`);
-                    newButton.textContent = 'Add Rule';
-                    newButton.classList.add('add-rule');
-
-                    // Append the new rule element to the relay form
-                    relayForm.appendChild(newRuleElement);
-
-                    // Create save button
-                    const saveButton = document.createElement('button');
-                    saveButton.type = 'submit';
-                    saveButton.id = `save-relay-${relay.id}-rules`;
-                    saveButton.classList.add('submit-button');
-                    saveButton.textContent = 'Save Changes';
-
-                    relayForm.appendChild(saveButton);
-                    relayDiv.appendChild(relayForm);
-                    relayAlarmRulesDiv.appendChild(relayDiv);
-                });
+            updateRelayAlarmRules(relay, relayDiv);
         });
+    }
+
+    function loadRelays() {
+        fetch('/api/all-relays')
+            .then(response => response.json())
+            .then(relays => {
+                updateAllRelayAlarmRules(relays);
+                updateRelayNames(relays);
+            })
+            .catch(error => console.error('Error fetching relays:', error));
     }
 
     // Fetch and load the HTML template, then fetch relays and update the relay-alarm-rules section
     loadTemplate()
         .then(() => {
-            fetch('/api/all-relays')
-                .then(response => response.json())
-                .then(relays => {
-                    updateRelayAlarmRules(relays);
-                    updateRelayNames(relays);
-                })
-                .catch(error => console.error('Error fetching relays:', error));
+            loadRelays();
         })
         .catch(error => console.error('Error loading template:', error));
 });
