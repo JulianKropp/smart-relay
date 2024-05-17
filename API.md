@@ -177,26 +177,20 @@ This API backend serves as the interface between the frontend interface for cont
   }
   ```
 
-## Relay Alarm Rules Update
+## Relay Alarm Rule Creation
 
 ### Request
 
-- **Endpoint**: `/api/relay-alarm/:relayId`
+- **Endpoint**: `/api/relay-alarm`
 - **Method**: POST
 - **Body**:
   ```json
-  [
-      {
-          "state": "on", // or "off"
-          "time": "06:00:00",
-          "days": ["mon", "wed", "fri"]
-      },
-      {
-          "state": "off",
-          "time": "22:00:00",
-          "days": ["tue", "thu", "sat", "sun"]
-      }
-  ]
+  {
+      "relayId": 1,
+      "state": "on", // or "off"
+      "time": "06:00:00",
+      "days": ["mon", "wed", "fri"]
+  }
   ```
 
 ### Successful Response
@@ -205,19 +199,12 @@ This API backend serves as the interface between the frontend interface for cont
 - **Body**:
   ```json
   {
-      "message": "Relay alarm rules updated successfully"
+      "message": "Relay alarm rule created successfully",
+      "ruleId": 123
   }
   ```
 
 ### Error Responses
-
-- **Status**: 404 Not Found
-- **Body**:
-  ```json
-  {
-      "error": "Relay not found"
-  }
-  ```
 
 - **Status**: 400 Bad Request
 - **Body**:
@@ -227,7 +214,83 @@ This API backend serves as the interface between the frontend interface for cont
   }
   ```
 
+- **Status**: 404 Not Found
+- **Body**:
+  ```json
+  {
+      "error": "Relay not found"
+  }
+  ```
 
+## Relay Alarm Rule Update
+
+### Request
+
+- **Endpoint**: `/api/relay-alarm/:relayId/:ruleId`
+- **Method**: 
+- **Body**:
+  ```json
+  {
+      "state": "off", // or "on"
+      "time": "22:00:00",
+      "days": ["tue", "thu", "sat", "sun"]
+  }
+  ```
+
+### Successful Response
+
+- **Status**: 200 OK
+- **Body**:
+  ```json
+  {
+      "message": "Relay alarm rule updated successfully"
+  }
+  ```
+
+### Error Responses
+
+- **Status**: 400 Bad Request
+- **Body**:
+  ```json
+  {
+      "error": "Invalid data provided"
+  }
+  ```
+
+- **Status**: 404 Not Found
+- **Body**:
+  ```json
+  {
+      "error": "Relay or rule not found"
+  }
+  ```
+
+## Relay Alarm Rule Deletion
+
+### Request
+
+- **Endpoint**: `/api/relay-alarm/:relayId/:ruleId`
+- **Method**: DELETE
+
+### Successful Response
+
+- **Status**: 200 OK
+- **Body**:
+  ```json
+  {
+      "message": "Relay alarm rule deleted successfully"
+  }
+  ```
+
+### Error Responses
+
+- **Status**: 404 Not Found
+- **Body**:
+  ```json
+  {
+      "error": "Relay or rule not found"
+  }
+  ```
 
 ## Network Information Retrieval
 
@@ -265,8 +328,6 @@ This API backend serves as the interface between the frontend interface for cont
       "serverTime": "2024-05-13T10:30:00Z"
   }
   ```
-
-
 
 ## Firmware Update
 
