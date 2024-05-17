@@ -186,6 +186,17 @@ body {
     gap: 10px;
 }
 
+/* General button styles for consistency */
+button {
+    padding: 10px 20px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 16px;
+    color: white;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
 .confirm-cancel-buttons button {
     padding: 5px 10px;
     cursor: pointer;
@@ -304,4 +315,46 @@ button.cancel-delete {
     content: '←';
     margin-right: 10px;
     font-size: 18px;
+}
+
+
+
+
+
+/* Layout adjustments for mobile view */
+@media (max-width: 600px) {
+    .rule {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .rule-detail {
+        width: 100%;
+    }
+
+    .input-group {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .select-style, .time-input {
+        width: 100%;
+        margin: 5px 0;
+    }
+
+    .weekdays {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+
+    .confirm-cancel-buttons {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .confirm-cancel-buttons button {
+        width: 100%;
+        margin: 5px 0;
+    }
 }
