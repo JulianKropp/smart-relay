@@ -283,6 +283,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
 
     // Save settings when the save button is clicked
+    Relays = [];
     document.getElementById("save-general-settings").addEventListener("click", function () {
         const settings = {
             systemName: document.getElementById("system-name").value,
@@ -294,15 +295,13 @@ document.addEventListener("DOMContentLoaded", function () {
             relayNames: []
         };
 
-        for (let i = 0; i <= 50; i++) {
-            const nameInput = document.getElementById(`relay-name-${i}`);
-            if (nameInput) {
-                settings.relayNames.append({
-                    id: i,
-                    name: nameInput.value
-                });
-            }
-        }
+        Relays.forEach(relay => {
+            const nameInput = document.getElementById(`relay-name-${relay.id}`);
+            settings.relayNames.push({
+                id: relay.id,
+                name: nameInput.value
+            });
+        });
 
         fetch("/api/settings", {
             method: "POST",
@@ -320,6 +319,7 @@ document.addEventListener("DOMContentLoaded", function () {
             });
     });
 
+
     function onChangeSyncTimeCheckbox() {
         if (document.getElementById("sync-time-checkbox").checked) {
             this.syncTimeInterval = setInterval(() => {
@@ -334,7 +334,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             }
                             ```
                         */
-                       time = data.time.split(":");
+                        time = data.time.split(":");
                         date = data.date.split("-");
 
                         document.getElementById("system-time").value = `${time[0]}:${time[1]}:${time[2]}`;
@@ -377,6 +377,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 .then(response => response.json())
                 .then(relays => {
                     updateAllRelayAlarmRules(relays);
+                    Relays = relays;
                 })
                 .catch(error => console.error('Error fetching relays:', error));
         })
