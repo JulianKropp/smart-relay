@@ -90,10 +90,16 @@ This API backend serves as the interface between the frontend interface for cont
       "systemTime": "11:32:45",
       "systemDate": "2024-07-23",
       "syncTime": true,
-      "relayNames": {
-          "relay1": "Relay 1",
-          "relay2": "Relay 2"
-      }
+      "relayNames": [
+        {
+            "id": 1,
+            "name": "New Relay 1"
+        },
+        {
+            "id": 2,
+            "name": "New Relay 2"
+        }
+      ]
   }
   ```
 
@@ -112,10 +118,16 @@ This API backend serves as the interface between the frontend interface for cont
       "systemTime": "14:30:00",
       "systemDate": "2024-05-13",
       "syncTime": true, // or false
-      "relayNames": {
-        "relay1": "Relay 1",
-        "relay2": "Relay 2"
-    }
+      "relayNames": [
+        {
+            "id": 1,
+            "name": "New Relay 1"
+        },
+        {
+            "id": 2,
+            "name": "New Relay 2"
+        }
+    ]
   }
   ```
 
@@ -227,7 +239,7 @@ This API backend serves as the interface between the frontend interface for cont
 ### Request
 
 - **Endpoint**: `/api/relay-alarm/:relayId/:ruleId`
-- **Method**: 
+- **Method**: PUT
 - **Body**:
   ```json
   {
@@ -325,7 +337,8 @@ This API backend serves as the interface between the frontend interface for cont
 - **Body**:
   ```json
   {
-      "serverTime": "2024-05-13T10:30:00Z"
+    "time": "11:32:45", 
+    "date": "2024-07-23"
   }
   ```
 
