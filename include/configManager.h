@@ -23,5 +23,5 @@ public:
     void setConfig(const String& key, const String& value);
 
     // Retrieve a string value
-    String getConfig(const String& key, const String& default_value = "");
+    String getConfig(const String& key, const String& default_value = "") const;
 };

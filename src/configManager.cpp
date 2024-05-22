@@ -12,7 +12,7 @@ void ConfigManager::setConfig(const String &key, const String &value)
     }
 }
 
-String ConfigManager::getConfig(const String &key, const String &default_value = "")
+String ConfigManager::getConfig(const String &key, const String &default_value) const
 {
     nvs_handle_t handle;
     esp_err_t err = nvs_open("storage", NVS_READWRITE, &handle);
