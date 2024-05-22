@@ -1,11 +1,15 @@
 #include "relay.h"
+#include "configManager.h"
 
-Relay::Relay(int id, String name, uint8_t pin) {
+
+
+Relay::Relay(const uint8_t pin, const String& name, const uint id) {
     this->id = id;
     this->name = name;
     this->pin = pin;
 
     pinMode(pin, OUTPUT);
+    this->Off();
 }
 
 int Relay::getId() {
@@ -25,8 +29,12 @@ bool Relay::getState() {
     return state == HIGH;
 }
 
-void Relay::setState(bool state) {
-    digitalWrite(this->pin, state ? HIGH : LOW);
+void Relay::On() {
+    digitalWrite(this->pin, HIGH);
+}
+
+void Relay::Off() {
+    digitalWrite(this->pin, LOW);
 }
 
 String Relay::toJson() {

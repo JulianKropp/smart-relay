@@ -4,16 +4,17 @@
 
 class Relay {
     private:
-        int id;
+        uint id;
         String name;
         uint8_t pin;
 
     public:
-        Relay(int id, String name, uint8_t pin);
+        Relay(const uint8_t pin, const String& name, const uint id);
         int getId();
         String getName();
         uint8_t getPin();
         bool getState();
-        void setState(bool state);
+        void On();
+        void Off();
         String toJson();
 };
