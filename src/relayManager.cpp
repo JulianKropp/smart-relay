@@ -15,13 +15,13 @@ void RelayManager::loadIdCounter()
 
         RelayManager::idCounter = (uint)idCounter.toInt();
 
-        isCounterLoaded = true;
+        RelayManager::isCounterLoaded = true;
     }
 }
 
 void RelayManager::saveIdCounter()
 {
-    String idCounter = String(this->idCounter);
+    String idCounter = String(RelayManager::idCounter);
     ConfigManager::getInstance().setConfig("relay_id_counter", idCounter);
 }
 
@@ -31,11 +31,11 @@ RelayManager::RelayManager() {
 Relay* RelayManager::addRelay(const uint8_t pin, const String& name, uint id) {
     if (id == 0) {
         this->loadIdCounter();
-        id = this->idCounter++;
+        id = RelayManager::idCounter++;
         this->saveIdCounter();
     } else {
-        if (id > this->idCounter) {
-            this->idCounter = id;
+        if (id > RelayManager::idCounter) {
+            RelayManager::idCounter = id;
             this->saveIdCounter();
         }
     }
@@ -44,8 +44,8 @@ Relay* RelayManager::addRelay(const uint8_t pin, const String& name, uint id) {
     if (tempRelay != nullptr) {
         return tempRelay;
     } else {
-        Relay* newRelay = new Relay(pin, name, id);
-        this->relays[newRelay->getId()] = newRelay;
+        tempRelay = new Relay(pin, name, id);
+        this->relays[tempRelay->getId()] = tempRelay;
     }
 
     return tempRelay;
@@ -60,11 +60,19 @@ vector<uint> RelayManager::getRelayIDs() const {
 }
 
 Relay* RelayManager::getRelayByID(const uint id) const {
-    return relays.at(id);
+    auto it = relays.find(id);
+    if (it != relays.end()) {
+        return it->second;
+    } else {
+        return nullptr;
+    }
 }
 
-void RelayManager::removeRelay(Relay* relay) {
-    relays.erase(relay->getId());
+void RelayManager::removeRelayByID(const uint id) {
+    auto it = relays.find(id);
+    if (it != relays.end()) {
+        relays.erase(it);
+    }
 }
 
 void RelayManager::loadRelays() {

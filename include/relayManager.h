@@ -21,7 +21,7 @@ class RelayManager {
             Relay* addRelay(const uint8_t pin, const String& name, uint id = 0);
             vector<uint> getRelayIDs() const;
             Relay* getRelayByID(const uint id) const;
-            void removeRelay(Relay* relay);
+            void removeRelayByID(const uint id);
 
             void loadRelays();
             void saveRelays();
