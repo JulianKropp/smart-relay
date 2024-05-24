@@ -22,6 +22,7 @@ class Alarm {
 
     public:
         Alarm(uint hour, uint minute, uint second, std::array<bool, 7> weekdays, Relay* relay);
+        Alarm(String json, Relay *relay);
 
         // get methods
         int getId();
