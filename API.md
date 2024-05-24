@@ -40,7 +40,7 @@ This API backend serves as the interface between the frontend interface for cont
   ```json
   {
       "relayId": 1,
-      "state": "on" // or "off"
+      "state": true // or false
   }
   ```
 
@@ -52,7 +52,7 @@ This API backend serves as the interface between the frontend interface for cont
   {
       "message": "Relay state updated successfully",
       "relayId": 1,
-      "currentState": "on" // or "off"
+      "state": true // or false
   }
   ```
 
@@ -168,13 +168,13 @@ This API backend serves as the interface between the frontend interface for cont
   [
       {
           "id": 1,
-          "state": "on",
+          "state": true,
           "time": "06:00:00",
           "days": ["mon", "wed", "fri"]
       },
       {
           "id": 2,
-          "state": "off",
+          "state": false,
           "time": "22:00:00",
           "days": ["tue", "thu", "sat", "sun"]
       }
@@ -201,7 +201,7 @@ This API backend serves as the interface between the frontend interface for cont
   ```json
   {
       "relayId": 1,
-      "state": "on", // or "off"
+      "state": true, // or false
       "time": "06:00:00",
       "days": ["mon", "wed", "fri"]
   }
@@ -245,7 +245,7 @@ This API backend serves as the interface between the frontend interface for cont
 - **Body**:
   ```json
   {
-      "state": "off", // or "on"
+      "state": false, // or true
       "time": "22:00:00",
       "days": ["tue", "thu", "sat", "sun"]
   }
