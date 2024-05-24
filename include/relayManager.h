@@ -22,6 +22,7 @@ class RelayManager {
 
         public:
             RelayManager(RTC* rtc);
+            ~RelayManager();
 
             Relay* addRelay(const uint8_t pin, const String& name, uint id = 0);
             vector<uint> getRelayIDs() const;

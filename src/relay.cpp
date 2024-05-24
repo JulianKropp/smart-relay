@@ -34,6 +34,12 @@ Relay::Relay(const uint8_t pin, const String& name, const uint id) {
     this->Off();
 }
 
+Relay::~Relay() {
+    for (auto const& element : this->alarms) {
+        delete element.second;
+    }
+}
+
 int Relay::getId() {
     return this->id;
 }

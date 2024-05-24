@@ -30,6 +30,14 @@ RelayManager::RelayManager(RTC *rtc)
     this->rtc = rtc;
 }
 
+RelayManager::~RelayManager()
+{
+    for (auto const &element : this->relays)
+    {
+        delete element.second;
+    }
+}
+
 Relay *RelayManager::addRelay(const uint8_t pin, const String &name, uint id)
 {
     if (id == 0)
