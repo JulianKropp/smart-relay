@@ -13,6 +13,26 @@ Relay::Relay(const uint8_t pin, const String& name) {
     this->Off();
 }
 
+Relay::Relay(String json) {
+    DynamicJsonDocument doc(1024);
+    deserializeJson(doc, json);
+
+    this->id = doc["id"];
+    this->name = doc["name"].as<String>();
+    this->pin = doc["pin"];
+
+    pinMode(pin, OUTPUT);
+    this->Off();
+
+    JsonArray alarmsArray = doc["alarms"];
+    for (JsonVariant alarm : alarmsArray) {
+        String alarmJson;
+        serializeJson(alarm, alarmJson);
+        Alarm* tempAlarm = new Alarm(alarmJson, this);
+        this->alarms[tempAlarm->getId()] = tempAlarm;
+    }
+}
+
 Relay::~Relay() {
     for (auto const& element : this->alarms) {
         delete element.second;

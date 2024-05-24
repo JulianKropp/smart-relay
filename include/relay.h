@@ -23,6 +23,7 @@ class Relay {
 
     public:
         Relay(const uint8_t pin, const String& name);
+        Relay(String json);
         ~Relay();
         int getId();
         String getName();
