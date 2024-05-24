@@ -1,7 +1,9 @@
 #pragma once
 #include "relay.h"
+#include "rtc.h"
 #include <array>
 #include <cstdint>
+#include <tuple>
 
 // Forward declaration of Relay
 class Relay;
@@ -14,7 +16,7 @@ class Alarm {
         uint hour = 0;
         uint minute = 0;
         uint second = 0;
-        std::array<bool, 7> weekdays = {false, false, false, false, false, false, false};
+        std::array<bool, 7> weekdays = {false, false, false, false, false, false, false}; // Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday
 
     public:
         Alarm(uint hour, uint minute, uint second, std::array<bool, 7> weekdays, Relay* relay, uint id = 0);
@@ -33,4 +35,6 @@ class Alarm {
         void setSecond(const uint second);
         void setWeekdays(const std::array<bool, 7> weekdays);
         void setRelay(Relay* relay);
+
+        uint getNextAlarminSeconds(RTC* rtc) const; // This will return seconds from rtc now until this alarm will be executed
 };

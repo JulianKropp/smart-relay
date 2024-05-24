@@ -2,50 +2,84 @@
 #include <iostream>
 #include <fstream>
 
-Alarm::Alarm(uint hour, uint minute, uint second, std::array<bool, 7> weekdays, Relay* relay, uint id)
-    : hour(hour), minute(minute), second(second), weekdays(weekdays), relay(relay), id(id) {
+Alarm::Alarm(uint hour, uint minute, uint second, std::array<bool, 7> weekdays, Relay *relay, uint id)
+    : hour(hour), minute(minute), second(second), weekdays(weekdays), relay(relay), id(id)
+{
 }
 
-int Alarm::getId() {
+int Alarm::getId()
+{
     return id;
 }
 
-uint Alarm::getHour() const {
+uint Alarm::getHour() const
+{
     return hour;
 }
 
-uint Alarm::getMinute() const {
+uint Alarm::getMinute() const
+{
     return minute;
 }
 
-uint Alarm::getSecond() const {
+uint Alarm::getSecond() const
+{
     return second;
 }
 
-std::array<bool, 7> Alarm::getWeekdays() const {
+std::array<bool, 7> Alarm::getWeekdays() const
+{
     return weekdays;
 }
 
-Relay* Alarm::getRelay() const {
+Relay *Alarm::getRelay() const
+{
     return relay;
 }
 
-void Alarm::setHour(const uint hour) {
+void Alarm::setHour(const uint hour)
+{
     this->hour = hour;
 }
 
-void Alarm::setMinute(const uint minute) {
+void Alarm::setMinute(const uint minute)
+{
     this->minute = minute;
 }
 
-void Alarm::setSecond(const uint second) {
+void Alarm::setSecond(const uint second)
+{
     this->second = second;
 }
 
-void Alarm::setWeekdays(const std::array<bool, 7> weekdays) {
+void Alarm::setWeekdays(const std::array<bool, 7> weekdays)
+{
     this->weekdays = weekdays;
 }
 
-void Alarm::setRelay(Relay* relay) {
+void Alarm::setRelay(Relay *relay)
+{
     this->relay = relay;
+}
+
+uint Alarm::getNextAlarminSeconds(RTC* rtc) const {
+    DateTime now = rtc->now();
+
+    // get weekday
+    int weekday = now.dayOfTheWeek();
+
+    for (int i = 0; i < 7; i++) {
+        int day = (weekday + i) % 7;
+        if (weekdays[day]) {
+            // Calculate the next alarm time
+            DateTime nextAlarm = DateTime(now.year(), now.month(), now.day() + i, hour, minute, second);
+
+            // Check if the alarm is in the past
+            if (nextAlarm < now) {
+                continue;
+            }
+
+            return (nextAlarm - now).totalseconds();
+        }
+    }
 }
