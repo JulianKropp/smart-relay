@@ -15,4 +15,6 @@ public:
     void begin();
 
     DateTime now();
+
+    void setDateTime(const DateTime& dt);
 };

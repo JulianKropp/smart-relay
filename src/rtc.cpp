@@ -22,3 +22,8 @@ DateTime RTC::now()
 {
     return rtc.now();
 }
+
+void RTC::setDateTime(const DateTime &dt)
+{
+    rtc.adjust(dt);
+}
