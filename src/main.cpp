@@ -1,69 +1,116 @@
 #include <Arduino.h>
-#include "relayManager.h"
-#include "configManager.h"
+#include <array>
+#include "relay.h"
 #include "alarm.h"
+#include "configManager.h"
+#include "relayManager.h"
+#include "rtc.h"
 
-// // Define relay instances
-// Relay relay1 = Relay(26, "relay1", 1);
-// Relay relay2 = Relay(25, "relay2", 1);
-// Relay relay3 = Relay(33, "relay3", 1);
-// Relay relay4 = Relay(32, "relay4", 1);
+RTC rtc(15, 2);
 
-// // Define an array of relay objects
-// Relay relays[4] = {relay1, relay2, relay3, relay4};
+// Testfunktion für die Klasse Alarm
+void testAlarm() {
+    std::array<bool, 7> weekdays1 = {true, true, true, true, true, false, false};
+    std::array<bool, 7> weekdays2 = {false, true, true, true, true, true, false};
+    Relay relay1(32, "Test Relay 1", 1);
+    Relay relay2(33, "Test Relay 2", 2);
 
-RelayManager rm = RelayManager();
-ConfigManager& cm = ConfigManager::getInstance();
+    Alarm alarm1(7, 30, 0, weekdays1, &relay1, 1);
+    Alarm alarm2(7, 30, 0, weekdays2, &relay2, 2);
+    Alarm alarm3(8, 0, 0, weekdays1, &relay1, 3);
+
+    Serial.print(alarm1.getNextAlarminSeconds(rtc.now()));
+}
+
+// Testfunktion für die Klasse ConfigManager
+void testConfigManager() {
+    ConfigManager& config = ConfigManager::getInstance();
+
+    config.setConfig("wifi_ssid", "MyNetwork");
+    config.setConfig("wifi_password", "MyPassword");
+
+    Serial.print("WiFi SSID: ");
+    Serial.println(config.getConfig("wifi_ssid"));
+    Serial.print("WiFi Password: ");
+    Serial.println(config.getConfig("wifi_password"));
+}
+
+// Testfunktion für die Klasse Relay
+void testRelay() {
+    Relay relay(33, "Living Room Light", 2);
+
+    Serial.print("Relay ID: ");
+    Serial.println(relay.getId());
+    Serial.print("Relay Name: ");
+    Serial.println(relay.getName());
+    Serial.print("Relay Pin: ");
+    Serial.println(relay.getPin());
+
+    relay.On();
+    Serial.print("Relay State after On(): ");
+    Serial.println(relay.getState());
+    relay.Off();
+    Serial.print("Relay State after Off(): ");
+    Serial.println(relay.getState());
+}
+
+// Testfunktion für die Klasse RelayManager
+void testRelayManager() {
+    RelayManager relayManager(&rtc);
+
+    Relay* relay1 = relayManager.addRelay(25, "Bedroom Light", 3);
+    Relay* relay2 = relayManager.addRelay(26, "Kitchen Light", 4);
+
+    std::vector<uint> relayIDs = relayManager.getRelayIDs();
+    Serial.print("Relay IDs: ");
+    for (uint id : relayIDs) {
+        Serial.print(id);
+        Serial.print(" ");
+    }
+    Serial.println();
+
+    Relay* retrievedRelay = relayManager.getRelayByID(3);
+    if (retrievedRelay) {
+        Serial.print("Retrieved Relay Name: ");
+        Serial.println(retrievedRelay->getName());
+    }
+
+    relayManager.removeRelayByID(4);
+    relayIDs = relayManager.getRelayIDs();
+    Serial.print("Relay IDs after removal: ");
+    for (uint id : relayIDs) {
+        Serial.print(id);
+        Serial.print(" ");
+    }
+    Serial.println();
+}
 
 void setup() {
     Serial.begin(115200);
 
-    ConfigManager& cm = ConfigManager::getInstance();
+    rtc.begin();
 
-    // Set the configuration value
-    String name = cm.getConfig("device_name", "");
+    Serial.println("Starting tests...");
 
-    Serial.println("Device name: " + name);
-
-    if (name == "") {
-        cm.setConfig("device_name", "ESP32");
-    }
-
-    Relay* r1 = rm.addRelay(32, String("Relay 1"), 1);
-    Relay* r2 = rm.addRelay(33, String("Relay 2"), 2);
-    Relay* r3 = rm.addRelay(25, String("Relay 3"), 3);
-    Relay* r4 = rm.addRelay(26, String("Relay 4"), 4);
-
-    // Create test alarms
-    r1->addAlarm(8, 0, 0, {true, true, true, true, true, true, true}, 1);
-
-    std::vector<uint> alarmids = r1->getAlarmIDs();
-    for (auto const& id : alarmids) {
-        Alarm* alarm = r1->getAlarmByID(id);
-        Serial.println("Alarm ID: " + String(alarm->getId()));
-        Serial.println("Alarm Hour: " + String(alarm->getHour()));
-        Serial.println("Alarm Minute: " + String(alarm->getMinute()));
-        Serial.println("Alarm Second: " + String(alarm->getSecond()));
-        std::array<bool, 7> weekdays = alarm->getWeekdays();
-        for (int i = 0; i < 7; i++) {
-            Serial.println("Weekday " + String(i) + ": " + String(weekdays[i]));
-        }
-    }
-
+    testAlarm();
+    testConfigManager();
+    testRelay();
+    testRelayManager();
 }
 
+std::array<bool, 7> weekdays1 = {false, true, false, false, false, false, false};
+Relay relay1(32, "Test Relay 1", 1);
+
+Alarm alarm1(20, 22, 0, weekdays1, &relay1, 1);
+
 void loop() {
-    // Iterate through the relays array and turn each relay on and off
-    vector<uint> relayids = rm.getRelayIDs();
-    for (auto const& id : relayids) {
-        Relay* relay = rm.getRelayByID(id);
-        Serial.println("Relay ID: " + String(relay->getId()));
-        Serial.println("Relay Name: " + relay->getName());
-        Serial.println("Relay Pin: " + String(relay->getPin()));
-        Serial.println("Relay State: " + String(relay->getState()));
-        relay->On();
-        delay(1000);
-        relay->Off();
-        delay(1000);
-    }
+    DateTime now = rtc.now();
+    uint day = now.dayOfTheWeek();
+    uint hour = now.hour();
+    uint minute = now.minute();
+    uint second = now.second();
+
+    Serial.println("Next alarm: " + String(alarm1.getNextAlarminSeconds(rtc.now())));
+    Serial.println("Time now: " + String(day) + ":" + String(hour) + ":" + String(minute) + ":" + String(second));
+    delay(1000);
 }
