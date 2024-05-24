@@ -1,7 +1,11 @@
 #pragma once
-#include <map>
 #include "relay.h"
+#include "rtc.h"
+#include <map>
 #include <vector>
+#include <tuple>
+#include <algorithm>
+#include <queue>
 
 
 using std::vector;
@@ -14,9 +18,10 @@ class RelayManager {
         void saveIdCounter();
 
         std::map<uint, Relay*> relays; // Add the std:: namespace qualifier
+        RTC* rtc;
 
         public:
-            RelayManager();
+            RelayManager(RTC* rtc);
 
             Relay* addRelay(const uint8_t pin, const String& name, uint id = 0);
             vector<uint> getRelayIDs() const;
@@ -26,4 +31,6 @@ class RelayManager {
             void loadRelays();
             void saveRelays();
             String toJSON() const;
+
+            std::queue<std::vector<Alarm*>> getNextAlarm() const;
 };
