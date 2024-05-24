@@ -3,27 +3,6 @@
 #include "configManager.h"
 
 uint RelayManager::idCounter = 0;
-bool RelayManager::isCounterLoaded = false;
-
-void RelayManager::loadIdCounter()
-{
-    if (!RelayManager::isCounterLoaded)
-    {
-        ConfigManager &cm = ConfigManager::getInstance();
-
-        String idCounter = cm.getConfig("relay_id_counter", "1");
-
-        RelayManager::idCounter = (uint)idCounter.toInt();
-
-        RelayManager::isCounterLoaded = true;
-    }
-}
-
-void RelayManager::saveIdCounter()
-{
-    String idCounter = String(RelayManager::idCounter);
-    ConfigManager::getInstance().setConfig("relay_id_counter", idCounter);
-}
 
 RelayManager::RelayManager(RTC *rtc)
 {
@@ -40,20 +19,7 @@ RelayManager::~RelayManager()
 
 Relay *RelayManager::addRelay(const uint8_t pin, const String &name, uint id)
 {
-    if (id == 0)
-    {
-        this->loadIdCounter();
-        id = RelayManager::idCounter++;
-        this->saveIdCounter();
-    }
-    else
-    {
-        if (id > RelayManager::idCounter)
-        {
-            RelayManager::idCounter = id;
-            this->saveIdCounter();
-        }
-    }
+    id = id == 0 ? RelayManager::idCounter++ : id;
 
     Relay *tempRelay = this->getRelayByID(id);
     if (tempRelay != nullptr)
@@ -100,53 +66,6 @@ void RelayManager::removeRelayByID(const uint id)
         relays.erase(it);
         delete it->second;
     }
-}
-
-void RelayManager::loadRelays()
-{
-    ConfigManager &cm = ConfigManager::getInstance();
-    String relayCount = cm.getConfig("relay_id_counter", "0");
-    uint count = (uint)relayCount.toInt();
-
-    for (uint i = 1; i <= count; i++)
-    {
-        String relayName = cm.getConfig("relay_" + String(i) + "_name", "");
-        String relayPin = cm.getConfig("relay_" + String(i) + "_pin", "");
-
-        if (relayName != "" || relayPin != "")
-        {
-            continue;
-        }
-
-        if (relayName != "" && relayPin != 0)
-        {
-            this->addRelay(((uint8_t)(relayPin.toInt())), relayName, i);
-        }
-    }
-}
-
-void RelayManager::saveRelays()
-{
-    this->saveIdCounter();
-
-    ConfigManager &cm = ConfigManager::getInstance();
-    for (auto const &element : this->relays)
-    {
-        cm.setConfig("relay_" + String(element.first) + "_name", element.second->getName());
-        cm.setConfig("relay_" + String(element.first) + "_pin", String(element.second->getPin()));
-    }
-}
-
-String RelayManager::toJSON() const
-{
-    String json = "[";
-    for (auto const &element : this->relays)
-    {
-        json += "{\"id\": " + String(element.first) + ", \"name\": \"" + element.second->getName() + "\", \"pin\": " + String(element.second->getPin()) + ", \"state\": " + String(element.second->getState()) + "},";
-    }
-    json.remove(json.length() - 1);
-    json += "]";
-    return json;
 }
 
 std::queue<std::vector<Alarm*>> RelayManager::getNextAlarm() const {

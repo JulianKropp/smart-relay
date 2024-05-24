@@ -3,27 +3,6 @@
 #include "configManager.h"
 
 uint Relay::idCounter = 0;
-bool Relay::isCounterLoaded = false;
-
-void Relay::loadIdCounter()
-{
-    if (!Relay::isCounterLoaded)
-    {
-        ConfigManager& cm = ConfigManager::getInstance();
-
-        String idCounter = cm.getConfig("alarm_id_counter", "1");
-
-        Relay::idCounter = (uint)idCounter.toInt();
-
-        Relay::isCounterLoaded = true;
-    }
-}
-
-void Relay::saveIdCounter()
-{
-    String idCounter = String(Relay::idCounter);
-    ConfigManager::getInstance().setConfig("alarm_id_counter", idCounter);
-}
 
 Relay::Relay(const uint8_t pin, const String& name, const uint id) {
     this->id = id;
@@ -66,16 +45,7 @@ void Relay::Off() {
 }
 
 Alarm* Relay::addAlarm(uint hour, uint minute, uint second, std::array<bool, 7> weekdays, uint id) {
-    if (id == 0) {
-        this->loadIdCounter();
-        id = Relay::idCounter++;
-        this->saveIdCounter();
-    } else {
-        if (id > Relay::idCounter) {
-            Relay::idCounter = id;
-            this->saveIdCounter();
-        }
-    }
+    id = id == 0 ? Relay::idCounter++ : id;
 
     Alarm* tempAlarm = this->getAlarmByID(id);
     if (tempAlarm != nullptr) {

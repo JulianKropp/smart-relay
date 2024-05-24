@@ -13,9 +13,6 @@ using std::vector;
 class Relay {
     private:
         static uint idCounter;
-        static bool isCounterLoaded;
-        void loadIdCounter();
-        void saveIdCounter();
 
         uint id;
         String name;
