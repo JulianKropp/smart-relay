@@ -44,10 +44,13 @@ void setup()
     rtc.begin();
 
     // Initialize the Relay Manager
-    relayManager.addRelay(26, "Relay 1");
-    relayManager.addRelay(25, "Relay 2");
-    relayManager.addRelay(33, "Relay 3");
-    relayManager.addRelay(32, "Relay 4");
+    relayManager.addRelay(32, "Relay 1");
+    relayManager.addRelay(33, "Relay 2");
+    relayManager.addRelay(25, "Relay 3");
+    relayManager.addRelay(26, "Relay 4");
+
+
+
 
     // Initialize the SPIFFS
     if (!SPIFFS.begin(true))
@@ -66,7 +69,7 @@ void setup()
                       { handleFileRead(server.uri()); });
     // API
     server.on("/api/all-relays", HTTP_GET, handleGetAllRelays);
-    // server.on("/api/relay-control", HTTP_POST, handleRelayControl);
+    server.on("/api/relay-control", HTTP_POST, handleRelayControl);
     // server.on("/api/settings", HTTP_GET, handleSystemSettings);
     // server.on("/api/settings", HTTP_POST, handleUpdateSettings);
     // server.on("/api/relay-alarms", HTTP_GET, handleGetRelayAlarms);
@@ -155,7 +158,7 @@ void handleGetAllRelays()
 {
     try
     {
-        DynamicJsonDocument doc(1024);
+        JsonDocument doc;
         JsonArray relaysArray = doc.createNestedArray("relays");
 
         std::vector<uint> relayIDs = relayManager.getRelayIDs();
@@ -167,7 +170,7 @@ void handleGetAllRelays()
                 String name = relay->getName();
                 bool state = relay->getState();
 
-                DynamicJsonDocument relayDoc(1024);
+                JsonDocument relayDoc;
                 relayDoc["id"] = id;
                 relayDoc["name"] = name;
                 relayDoc["state"] = state;
@@ -178,6 +181,67 @@ void handleGetAllRelays()
         String response;
         serializeJson(doc, response);
         sendJsonResponse(200, response);
+    }
+    catch (const std::exception &e)
+    {
+        sendJsonResponse(500, "{ \"error\": \"" + String(e.what()) + "\"}");
+    }
+}
+
+// - **Endpoint**: `/api/relay-control` POST
+void handleRelayControl()
+{
+    try
+    {
+        // get body
+        String body = server.arg("plain");
+        Serial.println("Body: " + body);
+
+        // Allocate memory for the JsonDocument
+        StaticJsonDocument<200> doc; // Adjust size as needed
+
+        // Deserialize the JSON document
+        DeserializationError error = deserializeJson(doc, body);
+
+        // Check if deserialization was successful
+        if (error)
+        {
+            sendJsonResponse(400, "{ \"error\": \"Failed to parse JSON\"}");
+            return;
+        }
+
+        // get relay id and state
+        uint relayId = doc["relayId"].as<uint>();
+        bool state = doc["state"].as<bool>();
+
+        Serial.println("Relay ID: " + String(relayId));
+        Serial.println("State: " + String(state));
+
+        // control relay
+        Relay* relay = relayManager.getRelayByID(relayId);
+        if (relay != nullptr)
+        {
+            if (state)
+            {
+                relay->On();
+            }
+            else
+            {
+                relay->Off();
+            }
+            StaticJsonDocument<200> responseDoc;
+            responseDoc["message"] = "Relay state updated successfully";
+            responseDoc["relayId"] = relayId;
+            responseDoc["state"] = state;
+
+            String response;
+            serializeJson(responseDoc, response);
+            sendJsonResponse(200, response);
+        }
+        else
+        {
+            sendJsonResponse(404, "{ \"error\": \"Relay not found\"}");
+        }
     }
     catch (const std::exception &e)
     {
