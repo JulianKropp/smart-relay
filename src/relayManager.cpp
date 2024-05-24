@@ -7,6 +7,23 @@ RelayManager::RelayManager(RTC *rtc)
     this->rtc = rtc;
 }
 
+RelayManager::RelayManager(String json, RTC *rtc)
+{
+    this->rtc = rtc;
+
+    DynamicJsonDocument doc(1024);
+    deserializeJson(doc, json);
+
+    JsonArray relaysArray = doc["relays"];
+    for (JsonVariant relay : relaysArray)
+    {
+        String relayJson;
+        serializeJson(relay, relayJson);
+        Relay *tempRelay = new Relay(relayJson);
+        this->relays[tempRelay->getId()] = tempRelay;
+    }
+}
+
 RelayManager::~RelayManager()
 {
     for (auto const &element : this->relays)
@@ -17,7 +34,7 @@ RelayManager::~RelayManager()
 
 Relay *RelayManager::addRelay(const uint8_t pin, const String &name)
 {
-    Relay* tempRelay = new Relay(pin, name);
+    Relay *tempRelay = new Relay(pin, name);
     this->relays[tempRelay->getId()] = tempRelay;
 
     return tempRelay;
@@ -56,9 +73,10 @@ void RelayManager::removeRelayByID(const uint id)
     }
 }
 
-std::queue<std::vector<Alarm*>> RelayManager::getNextAlarm() const {
+std::queue<std::vector<Alarm *>> RelayManager::getNextAlarm() const
+{
 
-    std::vector<Alarm*> alarms;
+    std::vector<Alarm *> alarms;
     vector<uint> relayIDs = this->getRelayIDs();
     for (auto const &element : relayIDs)
     {
@@ -79,12 +97,11 @@ std::queue<std::vector<Alarm*>> RelayManager::getNextAlarm() const {
 
     DateTime now = this->rtc->now();
 
-    std::queue<std::vector<Alarm*>> alarmQueue;
+    std::queue<std::vector<Alarm *>> alarmQueue;
     for (int i = 0; i < 7; i++)
     {
-        std::vector<Alarm*> alarmsOfDay;
+        std::vector<Alarm *> alarmsOfDay;
 
-        
         int weekday = (now.dayOfTheWeek() + i) % 7;
         for (auto const &element : alarms)
         {
@@ -94,15 +111,13 @@ std::queue<std::vector<Alarm*>> RelayManager::getNextAlarm() const {
             }
         }
 
-
         // sort alarmsOfDay by element->getNextAlarminSeconds(midnight);
         DateTime midnight = DateTime(now.year(), now.month(), now.day() + i, 0, 0, 0);
-        std::sort(alarmsOfDay.begin(), alarmsOfDay.end(), [midnight](Alarm* a, Alarm* b) {
-            return a->getNextAlarminSeconds(midnight) < b->getNextAlarminSeconds(midnight);
-        });
+        std::sort(alarmsOfDay.begin(), alarmsOfDay.end(), [midnight](Alarm *a, Alarm *b)
+                  { return a->getNextAlarminSeconds(midnight) < b->getNextAlarminSeconds(midnight); });
 
         // group alarms which have the same next alarm time together
-        std::vector<Alarm*> groupedAlarms;
+        std::vector<Alarm *> groupedAlarms;
         for (auto const &element : alarmsOfDay)
         {
             if (groupedAlarms.size() == 0)
@@ -131,4 +146,40 @@ std::queue<std::vector<Alarm*>> RelayManager::getNextAlarm() const {
     }
 
     return alarmQueue;
+}
+
+String RelayManager::toJson() const
+{
+    DynamicJsonDocument doc(1024);
+    JsonArray relaysArray = doc.createNestedArray("relays");
+    for (auto const &element : this->relays)
+    {
+        Relay *relay = element.second;
+        DynamicJsonDocument relayDoc(1024);
+        relayDoc["id"] = relay->getId();
+        relayDoc["name"] = relay->getName();
+        relayDoc["pin"] = relay->getPin();
+        JsonArray alarmsArray = relayDoc.createNestedArray("alarms");
+        for (auto const &element : relay->getAlarmIDs())
+        {
+            Alarm *alarm = relay->getAlarmByID(element);
+            DynamicJsonDocument alarmDoc(1024);
+            alarmDoc["id"] = alarm->getId();
+            alarmDoc["hour"] = alarm->getHour();
+            alarmDoc["minute"] = alarm->getMinute();
+            alarmDoc["second"] = alarm->getSecond();
+            alarmDoc.createNestedArray("weekdays");
+            for (int i = 0; i < 7; i++)
+            {
+                alarmDoc["weekdays"][i] = alarm->getWeekdays()[i];
+            }
+            alarmDoc["relay"] = alarm->getRelay()->getId();
+            alarmsArray.add(alarmDoc);
+        }
+        relaysArray.add(relayDoc);
+    }
+
+    String output;
+    serializeJson(doc, output);
+    return output;
 }
