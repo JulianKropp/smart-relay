@@ -82,7 +82,7 @@ document.addEventListener("DOMContentLoaded", function () {
             // Update the state of the switch if the relay already exists
             const switchElement = document.getElementById(`relaySwitch${relay.id}`);
             if (switchElement) {
-                switchElement.checked = relay.state === "on";
+                switchElement.checked = relay.state === true;
             }
         });
     }
