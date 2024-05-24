@@ -192,13 +192,11 @@ std::queue<std::vector<Alarm*>> RelayManager::getNextAlarm() const {
         {
             if (groupedAlarms.size() == 0)
             {
+                groupedAlarms.push_back(element);
                 // if last element add to queue
                 if (element == alarmsOfDay.back())
                 {
                     alarmQueue.push(groupedAlarms);
-                } else {
-                    // else add to groupedAlarms
-                    groupedAlarms.push_back(element);
                 }
             }
             else
