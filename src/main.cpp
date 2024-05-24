@@ -1,170 +1,186 @@
-#include <Arduino.h>
-#include <array>
-#include "relay.h"
-#include "alarm.h"
-#include "configManager.h"
-#include "relayManager.h"
 #include "rtc.h"
+#include "relayManager.h"
 
+#include <WiFi.h>
+#include <WebServer.h>
+#include <SPIFFS.h>
+#include <ArduinoJson.h>
+
+// Network settings
+const char *ssid = "ESP32-Access-Point";
+const char *password = "12345678";
+
+// Create the WebServer (port 80)
+WebServer server(80);
+
+// RTC
 RTC rtc(22, 23);
 
-// Testfunktion für die Klasse Alarm
-void testAlarm()
-{
-    std::array<bool, 7> weekdays1 = {true, true, true, true, true, false, false};
-    std::array<bool, 7> weekdays2 = {false, true, true, true, true, true, false};
-    Relay relay1(32, "Test Relay 1");
-    Relay relay2(33, "Test Relay 2");
+// Relay Manager
+RelayManager relayManager(&rtc);
 
-    Alarm alarm1(7, 30, 0, weekdays1, &relay1);
-    Alarm alarm2(7, 30, 0, weekdays2, &relay2);
-    Alarm alarm3(8, 0, 0, weekdays1, &relay1);
+// Function declarations
+String getContentType(String filename);
+void handleFileRead(String path);
+void handleGetAllRelays();     // - **Endpoint**: `/api/all-relays` GET
+void handleRelayControl();     // - **Endpoint**: `/api/relay-control` POST
+void handleSystemSettings();   // - **Endpoint**: `/api/settings` GET
+void handleUpdateSettings();   // - **Endpoint**: `/api/settings` POST
+void handleGetRelayAlarms();   // - **Endpoint**: `/api/relay-alarms/:relayId` GET
+void handleCreateRelayAlarm(); // - **Endpoint**: `/api/relay-alarm` POST
+void handleUpdateRelayAlarm(); // - **Endpoint**: `/api/relay-alarm/:relayId/:ruleId` PUT
+void handleDeleteRelayAlarm(); // - **Endpoint**: `/api/relay-alarm/:relayId/:ruleId` DELETE
+void handleNetworkInfo();      // - **Endpoint**: `/api/network-info` GET
+void handleServerTime();       // - **Endpoint**: `/api/server-time` GET
+void handleFirmwareUpdate();   // - **Endpoint**: `/api/update-firmware` POST
+void sendJsonResponse(int status, const String &message);
 
-    Serial.print(alarm1.getNextAlarminSeconds(rtc.now()));
-}
-
-// Testfunktion für die Klasse ConfigManager
-void testConfigManager()
-{
-    ConfigManager &config = ConfigManager::getInstance();
-
-    config.setConfig("wifi_ssid", "MyNetwork");
-    config.setConfig("wifi_password", "MyPassword");
-
-    Serial.print("WiFi SSID: ");
-    Serial.println(config.getConfig("wifi_ssid"));
-    Serial.print("WiFi Password: ");
-    Serial.println(config.getConfig("wifi_password"));
-}
-
-// Testfunktion für die Klasse Relay
-void testRelay()
-{
-    Relay relay(33, "Living Room Light");
-
-    Serial.print("Relay ID: ");
-    Serial.println(relay.getId());
-    Serial.print("Relay Name: ");
-    Serial.println(relay.getName());
-    Serial.print("Relay Pin: ");
-    Serial.println(relay.getPin());
-
-    relay.On();
-    Serial.print("Relay State after On(): ");
-    Serial.println(relay.getState());
-    relay.Off();
-    Serial.print("Relay State after Off(): ");
-    Serial.println(relay.getState());
-}
-
-// Testfunktion für die Klasse RelayManager
-void testRelayManager()
-{
-    RelayManager relayManager(&rtc);
-
-    Relay *relay1 = relayManager.addRelay(25, "Bedroom Light");
-    Relay *relay2 = relayManager.addRelay(26, "Kitchen Light");
-
-    std::vector<uint> relayIDs = relayManager.getRelayIDs();
-    Serial.print("Relay IDs: ");
-    for (uint id : relayIDs)
-    {
-        Serial.print(id);
-        Serial.print(" ");
-    }
-    Serial.println();
-
-    Relay *retrievedRelay = relayManager.getRelayByID(3);
-    if (retrievedRelay)
-    {
-        Serial.print("Retrieved Relay Name: ");
-        Serial.println(retrievedRelay->getName());
-    }
-
-    relayManager.removeRelayByID(4);
-    relayIDs = relayManager.getRelayIDs();
-    Serial.print("Relay IDs after removal: ");
-    for (uint id : relayIDs)
-    {
-        Serial.print(id);
-        Serial.print(" ");
-    }
-    Serial.println();
-}
-
-// void setup() {
-//     Serial.begin(115200);
-
-//     rtc.begin();
-
-//     Serial.println("Starting tests...");
-
-//     testAlarm();
-//     testConfigManager();
-//     testRelay();
-//     testRelayManager();
-// }
-
+// Setup function
 void setup()
 {
     Serial.begin(115200);
 
+    // Initialize the RTC
     rtc.begin();
-    DateTime now(2024, 1, 1, 0, 0, 0);
-    rtc.setDateTime(now);
 
-    RelayManager rm(&rtc);
-    Relay *r1 = rm.addRelay(32, "Test Relay 1");
-    Relay *r2 = rm.addRelay(33, "Test Relay 2");
-    Relay *r3 = rm.addRelay(25, "Test Relay 3");
-    Relay *r4 = rm.addRelay(26, "Test Relay 4");
+    // Initialize the Relay Manager
+    relayManager.addRelay(26, "Relay 1");
+    relayManager.addRelay(25, "Relay 2");
+    relayManager.addRelay(33, "Relay 3");
+    relayManager.addRelay(32, "Relay 4");
 
-    std::array<bool, 7> weekdays1 = {false, true, false, false, false, false, false};
-    std::array<bool, 7> weekdays2 = {false, false, true, false, false, false, false};
-    std::array<bool, 7> weekdays3 = {false, false, false, true, false, false, false};
-    std::array<bool, 7> weekdays4 = {true, false, false, false, false, false, false};
-
-    Alarm* a1 = r1->addAlarm(1, 0, 0, weekdays1);
-    r2->addAlarm(2, 0, 0, weekdays2);
-    r3->addAlarm(3, 0, 0, weekdays3);
-    r4->addAlarm(4, 0, 0, weekdays4);
-
-    Serial.println(a1->toJson());
-    Serial.println(r4->toJson());
-
-    r2->removeAlarm(3);
-
-    rm.removeRelayByID(4);
-
-    std::queue<std::vector<Alarm *>> alarmQueue = rm.getNextAlarm();
-    // get size of the queue
-    Serial.println("Size of the queue: " + String(alarmQueue.size()));
-    while (!alarmQueue.empty())
+    // Initialize the SPIFFS
+    if (!SPIFFS.begin(true))
     {
-        std::vector<Alarm *> alarms = alarmQueue.front();
-        alarmQueue.pop();
-        Serial.println("Size of the vector: " + String(alarms.size()));
-        for (Alarm *alarm : alarms)
-        {
-            Serial.println("Alarm: " + String(String(alarm->getHour()) + ":" + String(alarm->getMinute()) + ":" + String(alarm->getSecond())));
-        }
+        Serial.println("An Error has occurred while mounting SPIFFS");
+        return;
+    }
+
+    // Start the Access Point
+    WiFi.softAP(ssid, password);
+    Serial.println("Access Point started");
+
+    // Define routes for the WebServer
+    // Web
+    server.onNotFound([]()
+                      { handleFileRead(server.uri()); });
+    // API
+    server.on("/api/all-relays", HTTP_GET, handleGetAllRelays);
+    // server.on("/api/relay-control", HTTP_POST, handleRelayControl);
+    // server.on("/api/settings", HTTP_GET, handleSystemSettings);
+    // server.on("/api/settings", HTTP_POST, handleUpdateSettings);
+    // server.on("/api/relay-alarms", HTTP_GET, handleGetRelayAlarms);
+    // server.on("/api/relay-alarm", HTTP_POST, handleCreateRelayAlarm);
+    // server.on("/api/relay-alarm", HTTP_PUT, handleUpdateRelayAlarm);
+    // server.on("/api/relay-alarm", HTTP_DELETE, handleDeleteRelayAlarm);
+    // server.on("/api/server-time", HTTP_GET, handleServerTime);
+    // server.on("/api/network-info", HTTP_GET, handleNetworkInfo);
+    // server.on("/api/update-firmware", HTTP_POST, handleFirmwareUpdate);
+
+    // Start the server
+    server.begin();
+    Serial.println("HTTP server started");
+}
+
+// Main loop
+void loop()
+{
+    server.handleClient();
+}
+
+// Utility functions
+String getContentType(String filename)
+{
+    if (server.hasArg("download"))
+        return "application/octet-stream";
+    else if (filename.endsWith(".htm"))
+        return "text/html";
+    else if (filename.endsWith(".html"))
+        return "text/html";
+    else if (filename.endsWith(".css"))
+        return "text/css";
+    else if (filename.endsWith(".js"))
+        return "application/javascript";
+    else if (filename.endsWith(".png"))
+        return "image/png";
+    else if (filename.endsWith(".gif"))
+        return "image/gif";
+    else if (filename.endsWith(".jpg"))
+        return "image/jpeg";
+    else if (filename.endsWith(".ico"))
+        return "image/x-icon";
+    else if (filename.endsWith(".xml"))
+        return "text/xml";
+    else if (filename.endsWith(".pdf"))
+        return "application/pdf";
+    else if (filename.endsWith(".zip"))
+        return "application/zip";
+    return "text/plain";
+}
+
+void handleFileRead(String path)
+{
+    Serial.println("Handling file read for: " + path);
+    if (path.endsWith("/"))
+        path += "index.html"; // Default to index.html
+
+    if (SPIFFS.exists(path))
+    {
+        File file = SPIFFS.open(path, "r");
+        String contentType = getContentType(path);
+        server.streamFile(file, contentType);
+        file.close();
+    }
+    else if (SPIFFS.exists(path + "/index.html"))
+    {
+        path = path + "/index.html";
+        File file = SPIFFS.open(path, "r");
+        String contentType = getContentType(path);
+        server.streamFile(file, contentType);
+        file.close();
+    }
+    else
+    {
+        server.send(404, "text/plain", "404: Not Found");
     }
 }
 
-// std::array<bool, 7> weekdays1 = {false, true, false, false, false, false, false};
-// Relay relay1(32, "Test Relay 1", 1);
-
-// Alarm alarm1(20, 22, 0, weekdays1, &relay1, 1);
-
-void loop()
+void sendJsonResponse(int status, const String &message)
 {
-    DateTime now = rtc.now();
-    uint day = now.dayOfTheWeek();
-    uint hour = now.hour();
-    uint minute = now.minute();
-    uint second = now.second();
+    server.send(status, "application/json", message);
+}
 
-    // Serial.println("Next alarm: " + String(alarm1.getNextAlarminSeconds(rtc.now())));
-    Serial.println("Time now: " + String(day) + ":" + String(hour) + ":" + String(minute) + ":" + String(second));
-    delay(1000);
+// - **Endpoint**: `/api/all-relays` GET
+void handleGetAllRelays()
+{
+    try
+    {
+        DynamicJsonDocument doc(1024);
+        JsonArray relaysArray = doc.createNestedArray("relays");
+
+        std::vector<uint> relayIDs = relayManager.getRelayIDs();
+        for (uint id : relayIDs)
+        {
+            Relay *relay = relayManager.getRelayByID(id);
+            if (relay != nullptr)
+            {
+                String name = relay->getName();
+                bool state = relay->getState();
+
+                DynamicJsonDocument relayDoc(1024);
+                relayDoc["id"] = id;
+                relayDoc["name"] = name;
+                relayDoc["state"] = state;
+
+                relaysArray.add(relayDoc);
+            }
+        }
+        String response;
+        serializeJson(doc, response);
+        sendJsonResponse(200, response);
+    }
+    catch (const std::exception &e)
+    {
+        sendJsonResponse(500, "{ \"error\": \"" + String(e.what()) + "\"}");
+    }
 }

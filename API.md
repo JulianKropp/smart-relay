@@ -14,18 +14,20 @@ This API backend serves as the interface between the frontend interface for cont
 - **Status**: 200 OK
 - **Body**:
   ```json
-  [
+  {
+    "relays": [
       {
-          "id": 1,
-          "name": "Relay 1",
-          "state": "on" // or "off"
+        "id": 0,
+        "name": "Relay 1",
+        "state": false
       },
       {
-          "id": 2,
-          "name": "Relay 2",
-          "state": "off"
+        "id": 1,
+        "name": "Relay 1",
+        "state": false
       }
-  ]
+    ]
+  }
   ```
 
 ## Relay Control

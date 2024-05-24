@@ -14,10 +14,12 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // Function to update the UI with the fetched relay data
-    function updateUI(relays) {
+    function updateUI(data) {
         if (relayList.innerHTML === "<p>Loading...</p>" || relayList.innerHTML === "<p>Error fetching relay data</p>") {
             relayList.innerHTML = "";
         }
+
+        let relays = data.relays;
 
         if (!relays || relays.length === 0) {
             relayList.innerHTML = "<p>No relays found</p>";
