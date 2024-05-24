@@ -72,6 +72,7 @@ void RelayManager::removeRelayByID(const uint id) {
     auto it = relays.find(id);
     if (it != relays.end()) {
         relays.erase(it);
+        delete it->second;
     }
 }
 

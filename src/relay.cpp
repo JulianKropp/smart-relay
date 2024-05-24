@@ -86,6 +86,7 @@ void Relay::removeAlarm(const uint id) {
     auto it = alarms.find(id);
     if (it != alarms.end()) {
         alarms.erase(it);
+        delete it->second;
     }
 }
 
