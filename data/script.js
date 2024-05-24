@@ -57,7 +57,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 // Add event listener to the switch
                 const relaySwitch = document.getElementById(`relaySwitch${relay.id}`);
                 relaySwitch.addEventListener('change', function () {
-                    const newState = this.checked ? 'on' : 'off';
+                    const newState = this.checked ? true : false;
                     const data = { relayId: relay.id, state: newState };
 
                     fetch('/api/relay-control', {
