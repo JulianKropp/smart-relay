@@ -53,15 +53,15 @@ uint8_t Relay::getPin() {
 
 bool Relay::getState() {
     int state = digitalRead(this->pin);
-    return state == HIGH;
+    return state == LOW;
 }
 
 void Relay::On() {
-    digitalWrite(this->pin, HIGH);
+    digitalWrite(this->pin, LOW);
 }
 
 void Relay::Off() {
-    digitalWrite(this->pin, LOW);
+    digitalWrite(this->pin, HIGH);
 }
 
 Alarm* Relay::addAlarm(uint hour, uint minute, uint second, std::array<bool, 7> weekdays) {
