@@ -80,4 +80,6 @@ uint Alarm::getNextAlarminSeconds(DateTime now) const {
             return (nextAlarm - now).totalseconds();
         }
     }
+
+    return -1;
 }
