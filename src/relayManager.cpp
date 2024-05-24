@@ -162,14 +162,15 @@ std::queue<std::vector<Alarm*>> RelayManager::getNextAlarm() const {
         }
     }
 
-    std::queue<std::vector<Alarm*>> alarmQueue;
+    DateTime now = this->rtc->now();
 
+    std::queue<std::vector<Alarm*>> alarmQueue;
     for (int i = 0; i < 7; i++)
     {
         std::vector<Alarm*> alarmsOfDay;
 
-        DateTime now = this->rtc->now();
-        int weekday = now.dayOfTheWeek();
+        
+        int weekday = (now.dayOfTheWeek() + i) % 7;
         for (auto const &element : alarms)
         {
             if (element->getWeekdays()[weekday])
@@ -191,7 +192,14 @@ std::queue<std::vector<Alarm*>> RelayManager::getNextAlarm() const {
         {
             if (groupedAlarms.size() == 0)
             {
-                groupedAlarms.push_back(element);
+                // if last element add to queue
+                if (element == alarmsOfDay.back())
+                {
+                    alarmQueue.push(groupedAlarms);
+                } else {
+                    // else add to groupedAlarms
+                    groupedAlarms.push_back(element);
+                }
             }
             else
             {
