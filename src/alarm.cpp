@@ -2,9 +2,12 @@
 #include <iostream>
 #include <fstream>
 
-Alarm::Alarm(uint hour, uint minute, uint second, std::array<bool, 7> weekdays, Relay *relay, uint id)
-    : hour(hour), minute(minute), second(second), weekdays(weekdays), relay(relay), id(id)
+uint Alarm::idCounter = 0;
+
+Alarm::Alarm(uint hour, uint minute, uint second, std::array<bool, 7> weekdays, Relay *relay)
+    : hour(hour), minute(minute), second(second), weekdays(weekdays), relay(relay)
 {
+    this->id = Alarm::idCounter++;
 }
 
 int Alarm::getId()
@@ -82,4 +85,20 @@ uint Alarm::getNextAlarminSeconds(DateTime now) const {
     }
 
     return -1;
+}
+
+String Alarm::toJson() const {
+    JsonDocument doc;
+    doc["id"] = id;
+    doc["hour"] = hour;
+    doc["minute"] = minute;
+    doc["second"] = second;
+    doc.createNestedArray("weekdays");
+    for (bool weekday : weekdays) {
+        doc["weekdays"].add(weekday);
+    }
+    doc["relay"] = relay->getId();
+    String jsonString;
+    serializeJson(doc, jsonString);
+    return jsonString;
 }

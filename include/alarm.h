@@ -4,12 +4,14 @@
 #include <array>
 #include <cstdint>
 #include <tuple>
+#include <ArduinoJson.h>
 
 // Forward declaration of Relay
 class Relay;
 
 class Alarm {
     private:
+        static uint idCounter;
         uint id;
 
         Relay* relay = nullptr;
@@ -19,7 +21,7 @@ class Alarm {
         std::array<bool, 7> weekdays = {false, false, false, false, false, false, false}; // Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday
 
     public:
-        Alarm(uint hour, uint minute, uint second, std::array<bool, 7> weekdays, Relay* relay, uint id = 0);
+        Alarm(uint hour, uint minute, uint second, std::array<bool, 7> weekdays, Relay* relay);
 
         // get methods
         int getId();
@@ -37,4 +39,6 @@ class Alarm {
         void setRelay(Relay* relay);
 
         uint getNextAlarminSeconds(DateTime now) const; // This will return seconds from rtc now until this alarm will be executed
+
+        String toJson() const;
 };

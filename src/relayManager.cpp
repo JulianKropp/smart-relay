@@ -2,8 +2,6 @@
 #include "relay.h"
 #include "configManager.h"
 
-uint RelayManager::idCounter = 0;
-
 RelayManager::RelayManager(RTC *rtc)
 {
     this->rtc = rtc;
@@ -17,20 +15,10 @@ RelayManager::~RelayManager()
     }
 }
 
-Relay *RelayManager::addRelay(const uint8_t pin, const String &name, uint id)
+Relay *RelayManager::addRelay(const uint8_t pin, const String &name)
 {
-    id = id == 0 ? RelayManager::idCounter++ : id;
-
-    Relay *tempRelay = this->getRelayByID(id);
-    if (tempRelay != nullptr)
-    {
-        return tempRelay;
-    }
-    else
-    {
-        tempRelay = new Relay(pin, name, id);
-        this->relays[tempRelay->getId()] = tempRelay;
-    }
+    Relay* tempRelay = new Relay(pin, name);
+    this->relays[tempRelay->getId()] = tempRelay;
 
     return tempRelay;
 }

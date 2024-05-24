@@ -12,8 +12,6 @@ using std::vector;
 
 class RelayManager {
     private:
-        static uint idCounter;
-
         std::map<uint, Relay*> relays; // Add the std:: namespace qualifier
         RTC* rtc;
 
@@ -21,7 +19,7 @@ class RelayManager {
             RelayManager(RTC* rtc);
             ~RelayManager();
 
-            Relay* addRelay(const uint8_t pin, const String& name, uint id = 0);
+            Relay* addRelay(const uint8_t pin, const String& name);
             vector<uint> getRelayIDs() const;
             Relay* getRelayByID(const uint id) const;
             void removeRelayByID(const uint id);
