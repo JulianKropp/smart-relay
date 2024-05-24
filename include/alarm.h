@@ -36,5 +36,5 @@ class Alarm {
         void setWeekdays(const std::array<bool, 7> weekdays);
         void setRelay(Relay* relay);
 
-        uint getNextAlarminSeconds(RTC* rtc) const; // This will return seconds from rtc now until this alarm will be executed
+        uint getNextAlarminSeconds(DateTime now) const; // This will return seconds from rtc now until this alarm will be executed
 };

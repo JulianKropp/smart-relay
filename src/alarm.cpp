@@ -62,9 +62,7 @@ void Alarm::setRelay(Relay *relay)
     this->relay = relay;
 }
 
-uint Alarm::getNextAlarminSeconds(RTC* rtc) const {
-    DateTime now = rtc->now();
-
+uint Alarm::getNextAlarminSeconds(DateTime now) const {
     // get weekday
     int weekday = now.dayOfTheWeek();
 
