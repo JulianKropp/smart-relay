@@ -27,6 +27,7 @@ class Relay {
         ~Relay();
         int getId();
         String getName();
+        void setName(const String& name);
         uint8_t getPin();
         bool getState();
         void On();

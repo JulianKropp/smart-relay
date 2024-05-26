@@ -47,6 +47,10 @@ String Relay::getName() {
     return this->name;
 }
 
+void Relay::setName(const String& name) {
+    this->name = name;
+}
+
 uint8_t Relay::getPin() {
     return this->pin;
 }
