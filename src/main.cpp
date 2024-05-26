@@ -802,3 +802,29 @@ void handleNetworkInfo()
         sendJsonResponse(500, "{ \"error\": \"" + String(e.what()) + "\"}");
     }
 }
+
+// - **Endpoint**: `/api/server-time` GET
+void handleServerTime()
+{
+    try
+    {
+        DateTime now = rtc.now();
+
+        StaticJsonDocument<200> doc;
+        doc["hour"] = now.hour();
+        doc["minute"] = now.minute();
+        doc["second"] = now.second();
+        doc["day"] = now.day();
+        doc["month"] = now.month();
+        doc["year"] = now.year();
+        doc["weekday"] = now.dayOfTheWeek();
+
+        String response;
+        serializeJson(doc, response);
+        sendJsonResponse(200, response);
+    }
+    catch (const std::exception &e)
+    {
+        sendJsonResponse(500, "{ \"error\": \"" + String(e.what()) + "\"}");
+    }
+}
