@@ -92,14 +92,16 @@ This API backend serves as the interface between the frontend interface for cont
       "systemTime": "11:32:45",
       "systemDate": "2024-07-23",
       "syncTime": true,
-      "relayNames": [
+      "relays": [
         {
             "id": 1,
-            "name": "New Relay 1"
+            "name": "New Relay 1",
+            "state": false
         },
         {
             "id": 2,
-            "name": "New Relay 2"
+            "name": "New Relay 2",
+            "state": true
         }
       ]
   }

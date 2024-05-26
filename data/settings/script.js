@@ -266,7 +266,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 return;
             }
 
-            data.relayNames.forEach(element => {
+            data.relays.forEach(element => {
                 const nameElement = createNameElement(element);
                 relayNamesDiv.appendChild(nameElement);
             });
