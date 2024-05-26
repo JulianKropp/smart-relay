@@ -341,7 +341,6 @@ void handleSystemSettings()
 
         StaticJsonDocument<200> doc;
         doc["systemName"] = systemName;
-        doc["systemTime"] = String(now.hour()) + ":" + String(now.minute()) + ":" + String(now.second());
 
         // Format month and day with leading zeros
         String month = String(now.month());
@@ -350,8 +349,6 @@ void handleSystemSettings()
         String day = String(now.day());
         if (day.length() == 1)
             day = "0" + day;
-
-        doc["systemDate"] = String(now.year()) + "-" + month + "-" + day;
 
         JsonArray relaysArray = doc.createNestedArray("relays");
         std::vector<uint> relayIDs = relayManager.getRelayIDs();
@@ -388,10 +385,6 @@ void handleUpdateSettings()
         // Define required keys and their types
         std::map<String, String> requiredKeys = {
             {"systemName", "string"},
-            {"wifiName", "string"},
-            {"wifiPassword", "string"},
-            {"systemTime", "string"},
-            {"systemDate", "string"},
             {"relays", "array"}};
 
         // Allocate memory for the JsonDocument
@@ -406,8 +399,6 @@ void handleUpdateSettings()
         }
 
         systemName = doc["systemName"].as<String>();
-        String systemTime = doc["systemTime"].as<String>();
-        String systemDate = doc["systemDate"].as<String>();
 
         // Update relays
         for (auto relay : doc["relays"].as<JsonArray>())
@@ -420,16 +411,6 @@ void handleUpdateSettings()
                 r->setName(name);
             }
         }
-
-        // Set the time
-        int year = systemDate.substring(0, 4).toInt();
-        int month = systemDate.substring(5, 7).toInt();
-        int day = systemDate.substring(8, 10).toInt();
-        int hour = systemTime.substring(0, 2).toInt();
-        int minute = systemTime.substring(3, 5).toInt();
-        int second = systemTime.substring(6, 8).toInt();
-
-        rtc.setDateTime(DateTime(year, month, day, hour, minute, second));
 
         // Save data to NVS
         ConfigManager &cm = ConfigManager::getInstance();

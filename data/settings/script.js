@@ -266,8 +266,6 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(response => response.json())
         .then(data => {
             document.getElementById("system-name").value = data.systemName;
-            document.getElementById("system-time").value = data.systemTime;
-            document.getElementById("system-date").value = data.systemDate;
 
             const relayNamesDiv = document.getElementById('relay-names');
             if (!relayNamesDiv) {
@@ -281,20 +279,16 @@ document.addEventListener("DOMContentLoaded", function () {
                 const nameElement = createNameElement(element);
                 relayNamesDiv.appendChild(nameElement);
             });
+        })
+        .then(() => {
+            Relays.forEach(relay => {
+                document.getElementById(`relay-name-${relay.id}`).addEventListener("input", saveGeneralSettings);
+            });
+            document.getElementById("system-name").addEventListener("input", saveGeneralSettings);
         });
 
-    // Load network information on page load
-    fetch("/api/network-info")
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById("wifi-status").textContent = data.wifiMode;
-            document.getElementById("ip-status").textContent = data.ipAddress;
-            document.getElementById("gateway-status").textContent = data.gateway;
-            document.getElementById("dns-status").textContent = data.dns;
-        });
-
-    // Save settings when the save button is clicked
-    document.getElementById("save-general-settings").addEventListener("click", function () {
+    // Save settings
+    function saveGeneralSettings() {
         const settings = {
             systemName: document.getElementById("system-name").value,
             relays: []
@@ -316,13 +310,19 @@ document.addEventListener("DOMContentLoaded", function () {
             body: JSON.stringify(settings)
         })
             .then(response => response.json())
-            .then(data => {
-                alert(data.message);
-            })
             .catch(error => {
-                alert("Failed to save settings.");
+                console.error("Failed to save settings.");
             });
-    });
+    }
+
+    // Load network information on page load
+    fetch("/api/network-info")
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById("ip-status").textContent = data.ipAddress;
+            document.getElementById("gateway-status").textContent = data.gateway;
+            document.getElementById("dns-status").textContent = data.dns;
+        });
 
     // Upload a file when the upload button is clicked
     document.getElementById("update-button").addEventListener("click", function () {
