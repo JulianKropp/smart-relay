@@ -6,6 +6,7 @@
 #include <WebServer.h>
 #include <SPIFFS.h>
 #include <ArduinoJson.h>
+#include <Update.h>
 
 // settings
 String systemName = "Smart Relays";
@@ -76,11 +77,11 @@ void setup()
     server.on("/api/settings", HTTP_POST, handleUpdateSettings);
     server.on("/api/relay-alarms", HTTP_GET, handleGetRelayAlarms);
     server.on("/api/relay-alarm", HTTP_POST, handleCreateRelayAlarm);
-    // server.on("/api/relay-alarm", HTTP_PUT, handleUpdateRelayAlarm);
-    // server.on("/api/relay-alarm", HTTP_DELETE, handleDeleteRelayAlarm);
-    // server.on("/api/server-time", HTTP_GET, handleServerTime);
-    // server.on("/api/network-info", HTTP_GET, handleNetworkInfo);
-    // server.on("/api/update-firmware", HTTP_POST, handleFirmwareUpdate);
+    server.on("/api/relay-alarm", HTTP_PUT, handleUpdateRelayAlarm);
+    server.on("/api/relay-alarm", HTTP_DELETE, handleDeleteRelayAlarm);
+    server.on("/api/server-time", HTTP_GET, handleServerTime);
+    server.on("/api/network-info", HTTP_GET, handleNetworkInfo);
+    server.on("/api/update-firmware", HTTP_POST, handleFirmwareUpdate);
 
     // Start the server
     server.begin();
@@ -552,7 +553,8 @@ void handleCreateRelayAlarm()
         String temp = "";
         for (int i = 0; i < time.length(); i++)
         {
-            if (i == time.length() - 1) {
+            if (i == time.length() - 1)
+            {
                 temp += time[i];
                 timeParts.push_back(temp);
                 break;
@@ -601,6 +603,132 @@ void handleCreateRelayAlarm()
         StaticJsonDocument<200> responseDoc;
         responseDoc["message"] = "Relay alarm rule created successfully";
         responseDoc["ruleId"] = alarm->getId();
+
+        String response;
+        serializeJson(responseDoc, response);
+        sendJsonResponse(200, response);
+    }
+    catch (const std::exception &e)
+    {
+        sendJsonResponse(500, "{ \"error\": \"" + String(e.what()) + "\"}");
+    }
+}
+
+// - **Endpoint**: `/api/relay-alarm?relayId=:relayId&alarmId=:alarmId` PUT
+void handleUpdateRelayAlarm()
+{
+    try
+    {
+        // Get body
+        String body = server.arg("plain");
+        Serial.println("Body: " + body);
+
+        // Define required keys and their types
+        std::map<String, String> requiredKeys = {
+            {"state", "bool"},
+            {"time", "string"},
+            {"weekdays", "array_bool_7"}};
+
+        // Allocate memory for the JsonDocument
+        StaticJsonDocument<256> doc; // Adjust size as needed
+
+        // Validate and create JSON document from string
+        String validationError = CreateJsonFromString(body, requiredKeys, doc);
+        if (validationError != "")
+        {
+            sendJsonResponse(400, "{ \"error\": \"" + validationError + "\"}");
+            return;
+        }
+
+        // Get relayId, alarmId
+        uint relayId = server.arg("relayId").toInt();
+        uint alarmId = server.arg("alarmId").toInt();
+
+        // Get relay
+        Relay *relay = relayManager.getRelayByID(relayId);
+        if (relay == nullptr)
+        {
+            sendJsonResponse(404, "{ \"error\": \"Relay not found\"}");
+            return;
+        }
+
+        // Get alarm
+        Alarm *alarm = relay->getAlarmByID(alarmId);
+        if (alarm == nullptr)
+        {
+            sendJsonResponse(404, "{ \"error\": \"Alarm not found\"}");
+            return;
+        }
+
+        // Get state, time and weekdays
+        bool state = doc["state"].as<bool>();
+        String time = doc["time"].as<String>();
+        std::array<bool, 7> weekdays;
+        for (int i = 0; i < 7; i++)
+        {
+            weekdays[i] = doc["weekdays"][i].as<bool>();
+        }
+
+        // Parse time
+        std::vector<String> timeParts;
+        String temp = "";
+        for (int i = 0; i < time.length(); i++)
+        {
+            if (i == time.length() - 1)
+            {
+                temp += time[i];
+                timeParts.push_back(temp);
+                break;
+            }
+
+            if (time[i] == ':')
+            {
+                timeParts.push_back(temp);
+                temp = "";
+            }
+            else
+            {
+                temp += time[i];
+            }
+        }
+
+        if (timeParts.size() != 3)
+        {
+            sendJsonResponse(400, "{ \"error\": \"Invalid 'time' format\"}");
+            return;
+        }
+
+        // Convert time parts to integers and check if they are valid
+        uint hour;
+        uint minute;
+        uint second;
+        try
+        {
+            hour = timeParts[0].toInt();
+            minute = timeParts[1].toInt();
+            second = timeParts[2].toInt();
+            if (hour > 23 || minute > 59 || second > 59)
+            {
+                sendJsonResponse(400, "{ \"error\": \"Invalid time values\"}");
+                return;
+            }
+        }
+        catch (const std::exception &e)
+        {
+            sendJsonResponse(400, "{ \"error\": \"Invalid time values\"}");
+            return;
+        }
+
+        // Update alarm
+        alarm->setHour(hour);
+        alarm->setMinute(minute);
+        alarm->setSecond(second);
+        alarm->setWeekdays(weekdays);
+        alarm->setState(state);
+
+        // Create response
+        StaticJsonDocument<200> responseDoc;
+        responseDoc["message"] = "Relay alarm rule updated successfully";
 
         String response;
         serializeJson(responseDoc, response);
