@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const label = document.createElement('label');
         label.htmlFor = `relay-name-${relay.id}`;
-        label.textContent = `Relay ${relay.id} Name:`;
+        label.textContent = `Relay ${relay.id + 1} Name:`;
 
         const input = document.createElement('input');
         input.type = 'text';
@@ -250,6 +250,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // Load settings on page load
+    Relays = [];
     fetch("/api/settings")
         .then(response => response.json())
         .then(data => {
@@ -265,6 +266,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 console.error('relay-names div not found');
                 return;
             }
+
+            Relays = data.relays;
 
             data.relays.forEach(element => {
                 const nameElement = createNameElement(element);
@@ -283,7 +286,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
 
     // Save settings when the save button is clicked
-    Relays = [];
     document.getElementById("save-general-settings").addEventListener("click", function () {
         const settings = {
             systemName: document.getElementById("system-name").value,
@@ -292,12 +294,12 @@ document.addEventListener("DOMContentLoaded", function () {
             systemTime: document.getElementById("system-time").value,
             systemDate: document.getElementById("system-date").value,
             syncTime: document.getElementById("sync-time-checkbox").checked,
-            relayNames: []
+            relays: []
         };
 
         Relays.forEach(relay => {
             const nameInput = document.getElementById(`relay-name-${relay.id}`);
-            settings.relayNames.push({
+            settings.relays.push({
                 id: relay.id,
                 name: nameInput.value
             });
