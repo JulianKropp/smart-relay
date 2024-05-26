@@ -11,7 +11,7 @@
 
 // settings
 String systemName = "Smart Relays";
-const char *APssid = "Smart-Relays";
+const char *APssid = "Smart-Relays-";
 const char *APpassword = NULL;
 IPAddress APip(192, 168, 4, 1);
 IPAddress APsubnet(255, 255, 255, 0);
@@ -47,6 +47,9 @@ void handleUpdateServerTime(); // - **Endpoint**: `/api/server-time` POST
 void handleFirmwareUpdate();   // - **Endpoint**: `/api/update-firmware` POST
 void sendJsonResponse(int status, const String &message);
 
+// void loadSettings();
+// void saveSettings();
+
 void calculateNextAlarm();
 
 // Setup function
@@ -76,7 +79,9 @@ void setup()
 
     // Start the Access Point
     WiFi.mode(WIFI_MODE_APSTA);
-    WiFi.softAP(APssid, APpassword);
+    String dynamicPart = String(now.hour()) + String(now.minute()) + String(now.second()) + String(now.day()) + String(now.month()) + String(now.year());
+    String fullSSID = String(APssid) + dynamicPart;
+    WiFi.softAP(fullSSID, APpassword);
     WiFi.softAPConfig(APip, APip, APsubnet);
     dnsServer.setTTL(3600);
     dnsServer.start(DNS_PORT, "*", APip);
