@@ -7,14 +7,22 @@
 #include <SPIFFS.h>
 #include <ArduinoJson.h>
 #include <Update.h>
+#include <DNSServer.h>
 
 // settings
 String systemName = "Smart Relays";
 String wifiName = "";
 String wifiPassword = "";
 bool syncTime = false;
-String APssid = "ESP32-Access-Point";
-String APpassword = "12345678";
+const char *APssid = "ESP32-Access-Point";
+const char *APpassword = NULL;
+IPAddress APip(192, 168, 4, 1);
+IPAddress APsubnet(255, 255, 255, 0);
+
+// DNS
+static const byte DNS_PORT = 53;
+static DNSServer dnsServer;
+const String localIPURL = "http://" + APip.toString();
 
 // Create the WebServer (port 80)
 WebServer server(80);
@@ -63,13 +71,54 @@ void setup()
     }
 
     // Start the Access Point
+    WiFi.mode(WIFI_MODE_APSTA);
     WiFi.softAP(APssid, APpassword);
+    WiFi.softAPConfig(APip, APip, APsubnet);
+    dnsServer.setTTL(3600);
+    dnsServer.start(DNS_PORT, "*", APip);
     Serial.println("Access Point started");
 
     // Define routes for the WebServer
-    // Web
     server.onNotFound([]()
                       { handleFileRead(server.uri()); });
+
+    // Captive portal
+    server.on("/connecttest.txt", []()
+              {
+        server.sendHeader("Location", "http://logout.net", true);
+        server.send(302, "text/html", ""); }); // windows 11 captive portal workaround
+
+    server.on("/wpad.dat", []()
+              { server.send(404); }); // Honestly don't understand what this is but a 404 stops win 10 keep calling this repeatedly and panicking the esp32 :)
+
+    server.on("/generate_204", []()
+              {
+        server.sendHeader("Location", localIPURL, true);
+        server.send(302, "text/html", ""); }); // android captive portal redirect
+
+    server.on("/redirect", []()
+              {
+        server.sendHeader("Location", localIPURL, true);
+        server.send(302, "text/html", ""); }); // microsoft redirect
+
+    server.on("/hotspot-detect.html", []()
+              {
+        server.sendHeader("Location", localIPURL, true);
+        server.send(302, "text/html", ""); }); // apple call home
+
+    server.on("/canonical.html", []()
+              {
+        server.sendHeader("Location", localIPURL, true);
+        server.send(302, "text/html", ""); }); // firefox captive portal call home
+
+    server.on("/success.txt", []()
+              { server.send(200); }); // firefox captive portal call home
+
+    server.on("/ncsi.txt", []()
+              {
+        server.sendHeader("Location", localIPURL, true);
+        server.send(302, "text/html", ""); }); // windows call home
+
     // API
     server.on("/api/all-relays", HTTP_GET, handleGetAllRelays);
     server.on("/api/relay-control", HTTP_POST, handleRelayControl);
@@ -91,7 +140,9 @@ void setup()
 // Main loop
 void loop()
 {
+    dnsServer.processNextRequest();
     server.handleClient();
+    delay(30);
 }
 
 // Utility functions
@@ -246,7 +297,6 @@ void handleRelayControl()
     {
         // Get body
         String body = server.arg("plain");
-        Serial.println("Body: " + body);
 
         // Define required keys and their types
         std::map<String, String> requiredKeys = {
@@ -354,7 +404,6 @@ void handleUpdateSettings()
     {
         // Get body
         String body = server.arg("plain");
-        Serial.println("Body: " + body);
 
         // Define required keys and their types
         std::map<String, String> requiredKeys = {
@@ -504,7 +553,6 @@ void handleCreateRelayAlarm()
     {
         // Get body
         String body = server.arg("plain");
-        Serial.println("Body: " + body);
 
         // Define required keys and their types
         std::map<String, String> requiredKeys = {
@@ -577,7 +625,6 @@ void handleUpdateRelayAlarm()
     {
         // Get body
         String body = server.arg("plain");
-        Serial.println("Body: " + body);
 
         // Define required keys and their types
         std::map<String, String> requiredKeys = {
