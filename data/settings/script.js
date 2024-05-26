@@ -164,7 +164,7 @@ document.addEventListener("DOMContentLoaded", function () {
         ruleDiv.appendChild(buttonContainer);
 
         confirmButton.addEventListener('click', function () {
-            fetch(`/api/relay-alarm/${relayId}/${ruleIndex}`, {
+            fetch(`/api/relay-alarm?relayId=${relayId}&alarmId=${ruleIndex}`, {
                 method: 'DELETE',
             })
                 .then(response => {
