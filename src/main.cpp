@@ -31,10 +31,10 @@ void handleGetAllRelays();     // - **Endpoint**: `/api/all-relays` GET
 void handleRelayControl();     // - **Endpoint**: `/api/relay-control` POST
 void handleSystemSettings();   // - **Endpoint**: `/api/settings` GET
 void handleUpdateSettings();   // - **Endpoint**: `/api/settings` POST
-void handleGetRelayAlarms();   // - **Endpoint**: `/api/relay-alarms/:relayId` GET
+void handleGetRelayAlarms();   // - **Endpoint**: `/api/relay-alarms?relayId=relayId` GET
 void handleCreateRelayAlarm(); // - **Endpoint**: `/api/relay-alarm` POST
-void handleUpdateRelayAlarm(); // - **Endpoint**: `/api/relay-alarm/:relayId/:ruleId` PUT
-void handleDeleteRelayAlarm(); // - **Endpoint**: `/api/relay-alarm/:relayId/:ruleId` DELETE
+void handleUpdateRelayAlarm(); // - **Endpoint**: `/api/relay-alarm?relayId=relayId&alarmId=alarmId` PUT
+void handleDeleteRelayAlarm(); // - **Endpoint**: `/api/relay-alarm?relayId=relayId&alarmId=alarmId` DELETE
 void handleNetworkInfo();      // - **Endpoint**: `/api/network-info` GET
 void handleServerTime();       // - **Endpoint**: `/api/server-time` GET
 void handleFirmwareUpdate();   // - **Endpoint**: `/api/update-firmware` POST
@@ -77,7 +77,7 @@ void setup()
     server.on("/api/relay-control", HTTP_POST, handleRelayControl);
     server.on("/api/settings", HTTP_GET, handleSystemSettings);
     server.on("/api/settings", HTTP_POST, handleUpdateSettings);
-    // server.on("/api/relay-alarms", HTTP_GET, handleGetRelayAlarms);
+    server.on("/api/relay-alarms", HTTP_GET, handleGetRelayAlarms);
     // server.on("/api/relay-alarm", HTTP_POST, handleCreateRelayAlarm);
     // server.on("/api/relay-alarm", HTTP_PUT, handleUpdateRelayAlarm);
     // server.on("/api/relay-alarm", HTTP_DELETE, handleDeleteRelayAlarm);
@@ -380,6 +380,52 @@ void handleUpdateSettings()
     }
     catch (const std::exception &e)
     {
+        sendJsonResponse(500, "{ \"error\": \"" + String(e.what()) + "\"}");
+    }
+}
+
+// - **Endpoint**: `/api/relay-alarms?relayId=relayId` GET
+void handleGetRelayAlarms() {
+    try {
+        // get relay id
+        uint relayId = server.arg("relayId").toInt();
+        
+        // get relay
+        Relay* relay = relayManager.getRelayByID(relayId);
+        if (relay != nullptr) {
+            JsonDocument doc;
+            JsonArray alarmsArray = doc.createNestedArray("alarms");
+
+            std::vector<uint> alarmIDs = relay->getAlarmIDs();
+            for (uint id : alarmIDs) {
+                Alarm* alarm = relay->getAlarmByID(id);
+                if (alarm != nullptr) {
+                    uint hour = alarm->getHour();
+                    uint minute = alarm->getMinute();
+                    uint second = alarm->getSecond();
+                    std::array<bool, 7> weekdays = alarm->getWeekdays();
+
+                    JsonDocument alarmDoc;
+                    alarmDoc["id"] = id;
+                    alarmDoc["state"] = alarm->getState();
+                    alarmDoc["time"] = String(hour) + ":" + String(minute) + ":" + String(second);
+                    alarmDoc.createNestedArray("weekdays");
+                    JsonArray weekdaysArray = alarmDoc.createNestedArray("weekdays");
+                    for (int i = 0; i < 7; i++) {
+                        weekdaysArray.add(weekdays[i]);
+                    }
+
+                    alarmsArray.add(alarmDoc);
+                }
+            }
+
+            String response;
+            serializeJson(doc, response);
+            sendJsonResponse(200, response);
+        } else {
+            sendJsonResponse(404, "{ \"error\": \"Relay not found\"}");
+        }
+    } catch (const std::exception& e) {
         sendJsonResponse(500, "{ \"error\": \"" + String(e.what()) + "\"}");
     }
 }
