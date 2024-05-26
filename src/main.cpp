@@ -29,6 +29,7 @@ RTC rtc(22, 23);
 
 // Relay Manager
 RelayManager relayManager(&rtc);
+std::queue<std::vector<Alarm *>> alarmQueue;
 
 // Function declarations
 String getContentType(String filename);
@@ -47,6 +48,8 @@ void handleUpdateServerTime(); // - **Endpoint**: `/api/server-time` POST
 void handleFirmwareUpdate();   // - **Endpoint**: `/api/update-firmware` POST
 void sendJsonResponse(int status, const String &message);
 
+void calculateNextAlarm();
+
 // Setup function
 void setup()
 {
@@ -54,12 +57,16 @@ void setup()
 
     // Initialize the RTC
     rtc.begin();
+    DateTime now = rtc.now();
 
     // Initialize the Relay Manager
     relayManager.addRelay(32, "Relay 1");
     relayManager.addRelay(33, "Relay 2");
     relayManager.addRelay(25, "Relay 3");
     relayManager.addRelay(26, "Relay 4");
+
+    // calculate new alarm queue
+    calculateNextAlarm();
 
     // Initialize the SPIFFS
     if (!SPIFFS.begin(true))
@@ -118,10 +125,74 @@ void setup()
 }
 
 // Main loop
+uint counter = 0;
+DateTime lastAlarmCalculation = DateTime(2020, 1, 1, 0, 0, 0);
 void loop()
 {
-    dnsServer.processNextRequest();
+    counter = (counter + 1) % 1000;
+
+    if (counter % 30 == 0) {
+        dnsServer.processNextRequest();
+    }
     server.handleClient();
+
+    if (counter == 0)
+    {
+        // Check alarms
+        DateTime now = rtc.now();
+
+        if (!alarmQueue.empty())
+        {
+            std::vector<Alarm *> alarms = alarmQueue.front();
+            for (Alarm *alarm : alarms)
+            {
+                if (alarm->checkAlarm(now))
+                {
+                    Relay* rel = alarm->getRelay();
+                    if (alarm->getState())
+                    {
+                        rel->On();
+                    }
+                    else
+                    {
+                        rel->Off();
+                    }
+                    alarmQueue.pop();
+                    break;
+                }
+            }
+        }
+
+        // lastAlarmCalculation < now - 24h, calculate new alarm queue
+        if (lastAlarmCalculation <= now - TimeSpan(1, 0, 0, 0))
+        {
+            calculateNextAlarm();
+            lastAlarmCalculation = now;
+        }
+    }
+
+    delay(1);
+}
+
+void calculateNextAlarm()
+{
+    alarmQueue = relayManager.getNextAlarm();
+
+    // Remove all alarms that are not in the next 24 hours
+    DateTime now = rtc.now();
+    while (!alarmQueue.empty())
+    {
+        std::vector<Alarm *> alarms = alarmQueue.front();
+        Alarm *alarm = alarms[0];
+        if (alarm->getNextAlarminSeconds(now) > 24 * 60 * 60)
+        {
+            alarmQueue.pop();
+        }
+        else
+        {
+            break;
+        }
+    }
 }
 
 // Utility functions
@@ -546,6 +617,9 @@ void handleCreateRelayAlarm()
         // Create alarm
         Alarm *alarm = relay->addAlarm(hour, minute, second, weekdays, state);
 
+        // Calculate new alarm queue
+        calculateNextAlarm();
+
         // Create response
         StaticJsonDocument<200> responseDoc;
         responseDoc["message"] = "Relay alarm rule created successfully";
@@ -660,6 +734,9 @@ void handleUpdateRelayAlarm()
         alarm->setWeekdays(weekdays);
         alarm->setState(state);
 
+        // Calculate new alarm queue
+        calculateNextAlarm();
+
         // Create response
         StaticJsonDocument<200> responseDoc;
         responseDoc["message"] = "Relay alarm rule updated successfully";
@@ -701,6 +778,9 @@ void handleDeleteRelayAlarm()
 
         // Delete alarm
         relay->removeAlarm(alarmId);
+
+        // Calculate new alarm queue
+        calculateNextAlarm();
 
         // Create response
         StaticJsonDocument<200> responseDoc;
@@ -802,6 +882,9 @@ void handleUpdateServerTime()
 
         // Set the time
         rtc.setDateTime(DateTime(year, month, day, hourAdjustment, minuteAdjustment, secondAdjustment));
+
+        // Calculate new alarm queue
+        calculateNextAlarm();
 
         // Create response
         StaticJsonDocument<200> responseDoc;

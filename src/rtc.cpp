@@ -3,18 +3,19 @@
 void RTC::begin()
 {
     Wire.begin(sdaPin, sclPin);
-    if (!rtc.begin())
-    {
+    while(true) {
+        if (rtc.begin()) {
+            break;
+        }
         Serial.println("Couldn't find RTC");
-        while (1)
-            ;
+        delay(5000);
     }
 
     if (rtc.lostPower())
     {
         Serial.println("RTC lost power, setting the time!");
         // Set the date and time at compile time
-        rtc.adjust(DateTime(2000, 1, 1, 0, 0, 0));
+        rtc.adjust(DateTime(2020, 2, 1, 0, 0, 0));
     }
 }
 

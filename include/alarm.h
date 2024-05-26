@@ -42,6 +42,8 @@ class Alarm {
         void setRelay(Relay* relay);
         void setState(bool state);
 
+        bool checkAlarm(DateTime now) const; // This will check if the alarm should be executed now or in the past 24 hours
+
         uint getNextAlarminSeconds(DateTime now) const; // This will return seconds from rtc now until this alarm will be executed
 
         String toJson() const;

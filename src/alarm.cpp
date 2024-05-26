@@ -106,6 +106,30 @@ void Alarm::setState(bool state)
     this->state = state;
 }
 
+// This will check if alarm is in time range between now and the past 24h from now
+bool Alarm::checkAlarm(DateTime now) const {
+    // Get now-24h
+    DateTime now24h = now - TimeSpan(1, 0, 0, 0); // Subtract 1 day (24 hours)
+
+    // Create alarm time for today
+    DateTime alarmTime(now.year(), now.month(), now.day(), hour, minute, second);
+
+    // Check if the alarm is set for today
+    if (weekdays[now.dayOfTheWeek()] && alarmTime <= now && alarmTime > now24h) {
+        return true;
+    }
+
+    // Check if the alarm is set for the previous day
+    DateTime yesterdayAlarmTime = alarmTime - TimeSpan(1, 0, 0, 0); // Subtract 1 day from the alarm time
+    if (weekdays[yesterdayAlarmTime.dayOfTheWeek()] && yesterdayAlarmTime <= now && yesterdayAlarmTime > now24h) {
+        return true;
+    }
+
+    return false;
+}
+
+
+
 uint Alarm::getNextAlarminSeconds(DateTime now) const
 {
     // get weekday
