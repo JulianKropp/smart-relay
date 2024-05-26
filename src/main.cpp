@@ -6,9 +6,13 @@
 #include <SPIFFS.h>
 #include <ArduinoJson.h>
 
-// Network settings
-const char *ssid = "ESP32-Access-Point";
-const char *password = "12345678";
+// settings
+const char *systemName = "Smart Relays";
+const char *wifiName = "";
+const char *wifiPassword = "";
+const bool syncTime = false;
+const char *APssid = "ESP32-Access-Point";
+const char *APpassword = "12345678";
 
 // Create the WebServer (port 80)
 WebServer server(80);
@@ -60,7 +64,7 @@ void setup()
     }
 
     // Start the Access Point
-    WiFi.softAP(ssid, password);
+    WiFi.softAP(APssid, APpassword);
     Serial.println("Access Point started");
 
     // Define routes for the WebServer
@@ -70,7 +74,7 @@ void setup()
     // API
     server.on("/api/all-relays", HTTP_GET, handleGetAllRelays);
     server.on("/api/relay-control", HTTP_POST, handleRelayControl);
-    // server.on("/api/settings", HTTP_GET, handleSystemSettings);
+    server.on("/api/settings", HTTP_GET, handleSystemSettings);
     // server.on("/api/settings", HTTP_POST, handleUpdateSettings);
     // server.on("/api/relay-alarms", HTTP_GET, handleGetRelayAlarms);
     // server.on("/api/relay-alarm", HTTP_POST, handleCreateRelayAlarm);
@@ -242,6 +246,55 @@ void handleRelayControl()
         {
             sendJsonResponse(404, "{ \"error\": \"Relay not found\"}");
         }
+    }
+    catch (const std::exception &e)
+    {
+        sendJsonResponse(500, "{ \"error\": \"" + String(e.what()) + "\"}");
+    }
+}
+
+// - **Endpoint**: `/api/settings` GET
+void handleSystemSettings()
+{
+    try
+    {
+        DateTime now = rtc.now();
+
+        StaticJsonDocument<200> doc;
+        doc["systemName"] = systemName;
+        doc["wifiName"] = wifiName;
+        doc["wifiPassword"] = wifiPassword;
+        doc["systemTime"] = String(now.hour()) + ":" + String(now.minute()) + ":" + String(now.second());
+
+        // Format month and day with leading zeros
+        String month = String(now.month());
+        if (month.length() == 1) month = "0" + month;
+        String day = String(now.day());
+        if (day.length() == 1) day = "0" + day;
+
+        doc["systemDate"] = String(now.year()) + "-" + month + "-" + day;
+        doc["syncTime"] = syncTime;
+
+        std::vector<uint> relayIDs = relayManager.getRelayIDs();
+        JsonArray relaysArray = doc.createNestedArray("relays");
+        for (uint id : relayIDs)
+        {
+            Relay *relay = relayManager.getRelayByID(id);
+            if (relay != nullptr)
+            {
+                String name = relay->getName();
+                bool state = relay->getState();
+
+                JsonObject relayDoc = relaysArray.createNestedObject();
+                relayDoc["id"] = id;
+                relayDoc["name"] = name;
+                relayDoc["state"] = state;
+            }
+        }
+
+        String response;
+        serializeJson(doc, response);
+        sendJsonResponse(200, response);
     }
     catch (const std::exception &e)
     {
