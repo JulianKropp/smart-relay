@@ -244,24 +244,27 @@ void handleRelayControl()
 {
     try
     {
-        // get body
+        // Get body
         String body = server.arg("plain");
         Serial.println("Body: " + body);
 
+        // Define required keys and their types
+        std::map<String, String> requiredKeys = {
+            {"relayId", "uint"},
+            {"state", "bool"}};
+
         // Allocate memory for the JsonDocument
-        StaticJsonDocument<200> doc; // Adjust size as needed
+        StaticJsonDocument<256> doc; // Adjust size as needed
 
-        // Deserialize the JSON document
-        DeserializationError error = deserializeJson(doc, body);
-
-        // Check if deserialization was successful
-        if (error)
+        // Validate and create JSON document from string
+        String validationError = CreateJsonFromString(body, requiredKeys, doc);
+        if (validationError != "")
         {
-            sendJsonResponse(400, "{ \"error\": \"Failed to parse JSON\"}");
+            sendJsonResponse(400, "{ \"error\": \"" + validationError + "\"}");
             return;
         }
 
-        // get relay id and state
+        // Get relay id and state
         uint relayId = doc["relayId"].as<uint>();
         bool state = doc["state"].as<bool>();
 
@@ -349,20 +352,28 @@ void handleUpdateSettings()
 {
     try
     {
-        // get body
+        // Get body
         String body = server.arg("plain");
         Serial.println("Body: " + body);
 
+        // Define required keys and their types
+        std::map<String, String> requiredKeys = {
+            {"systemName", "string"},
+            {"wifiName", "string"},
+            {"wifiPassword", "string"},
+            {"systemTime", "string"},
+            {"systemDate", "string"},
+            {"syncTime", "bool"},
+            {"relays", "array"}};
+
         // Allocate memory for the JsonDocument
-        StaticJsonDocument<200> doc; // Adjust size as needed
+        StaticJsonDocument<256> doc; // Adjust size as needed
 
-        // Deserialize the JSON document
-        DeserializationError error = deserializeJson(doc, body);
-
-        // Check if deserialization was successful
-        if (error)
+        // Validate and create JSON document from string
+        String validationError = CreateJsonFromString(body, requiredKeys, doc);
+        if (validationError != "")
         {
-            sendJsonResponse(400, "{ \"error\": \"Failed to parse JSON\"}");
+            sendJsonResponse(400, "{ \"error\": \"" + validationError + "\"}");
             return;
         }
 
@@ -373,7 +384,7 @@ void handleUpdateSettings()
         String systemDate = doc["systemDate"].as<String>();
         syncTime = doc["syncTime"].as<bool>();
 
-        // update relays
+        // Update relays
         for (auto relay : doc["relays"].as<JsonArray>())
         {
             uint id = relay["id"].as<uint>();
@@ -532,35 +543,9 @@ void handleCreateRelayAlarm()
         }
 
         // Parse time
-        std::vector<String> timeParts;
-        String temp = "";
-        for (int i = 0; i < time.length(); i++)
-        {
-            if (i == time.length() - 1)
-            {
-                temp += time[i];
-                timeParts.push_back(temp);
-                break;
-            }
-
-            if (time[i] == ':')
-            {
-                timeParts.push_back(temp);
-                temp = "";
-            }
-            else
-            {
-                temp += time[i];
-            }
-        }
-        if (timeParts.size() != 3)
-        {
-            sendJsonResponse(400, "{ \"error\": \"Invalid 'time' format\"}");
-            return;
-        }
-        uint hour = timeParts[0].toInt();
-        uint minute = timeParts[1].toInt();
-        uint second = timeParts[2].toInt();
+        int hour = time.substring(0, 2).toInt();
+        int minute = time.substring(3, 5).toInt();
+        int second = time.substring(6, 8).toInt();
         if (hour > 23 || minute > 59 || second > 59)
         {
             sendJsonResponse(400, "{ \"error\": \"Invalid time values\"}");
