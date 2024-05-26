@@ -828,3 +828,29 @@ void handleServerTime()
         sendJsonResponse(500, "{ \"error\": \"" + String(e.what()) + "\"}");
     }
 }
+
+// - **Endpoint**: `/api/update-firmware` POST
+void handleFirmwareUpdate() {
+  HTTPUpload& upload = server.upload();
+
+  if (upload.status == UPLOAD_FILE_START) {
+    Serial.printf("Update: %s\n", upload.filename.c_str());
+    if (!Update.begin(UPDATE_SIZE_UNKNOWN)) {
+      Update.printError(Serial);
+    }
+  } else if (upload.status == UPLOAD_FILE_WRITE) {
+    if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
+      Update.printError(Serial);
+    }
+  } else if (upload.status == UPLOAD_FILE_END) {
+    if (Update.end(true)) {
+      Serial.printf("Update Success: %u bytes\n", upload.totalSize);
+      server.send(200, "application/json", "{\"message\": \"Firmware updated successfully\"}");
+    } else {
+      Update.printError(Serial);
+      server.send(400, "application/json", "{\"error\": \"Invalid firmware file\"}");
+    }
+  } else {
+    server.send(400, "application/json", "{\"error\": \"Invalid firmware file\"}");
+  }
+}
