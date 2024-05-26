@@ -190,38 +190,103 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!relayDiv) {
             relayDiv = document.getElementById(`relay-${relay.id}-form`);
         }
-
+    
         if (!relayDiv) {
             console.error(`relay-${relay.id}-form not found`);
             return;
         }
-
+    
         fetch(`/api/relay-alarms?relayId=${relay.id}`)
             .then(response => response.json())
             .then(alarmRulesob => {
                 let alarmRules = alarmRulesob.alarms;
-
+    
                 // Clear existing rules before updating
                 while (relayDiv.firstChild) {
                     relayDiv.removeChild(relayDiv.firstChild);
                 }
-
+    
                 const rulesHeading = document.createElement('h3');
                 rulesHeading.id = `relay-${relay.id}-rules-heading`;
                 rulesHeading.textContent = `Rules: ${relay.name}`;
                 relayDiv.appendChild(rulesHeading);
-
+    
                 alarmRules.forEach((rule) => {
                     const ruleId = rule.id;
                     let ruleElement = createRuleElement(relay.id, rule, ruleId, "delete");
                     relayDiv.appendChild(ruleElement);
+    
+                    // Attach event listeners properly
+                    document.getElementById(`relay-${relay.id}-select-${ruleId}`).addEventListener('change', () => updateRelayRule(relay.id, ruleId));
+                    document.getElementById(`relay-${relay.id}-time-${ruleId}`).addEventListener('input', () => updateRelayRule(relay.id, ruleId));
+                    
+                    const days = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+                    days.forEach(day => {
+                        document.getElementById(`relay-${relay.id}-${day}-${ruleId}`).addEventListener('change', () => updateRelayRule(relay.id, ruleId));
+                    });
                 });
-
+    
                 // Ensure the "Add" button is always at the bottom
                 const newRuleElement = createRuleElement(relay.id, { state: true, time: '00:00:00', weekdays: [false, false, false, false, false, false, false] }, alarmRules.length + 1, "add");
                 relayDiv.appendChild(newRuleElement);
             });
     }
+
+    function updateRelayRule(relayID, ruleID) {
+        // /api/relay-alarm?relayId=0&ruleId=0 PUT
+        let rs = document.getElementById(`relay-${relayID}-select-${ruleID}`);
+        let ti = document.getElementById(`relay-${relayID}-time-${ruleID}`);
+        let ch = document.getElementById(`relay-${relayID}-weekdays-${ruleID}`);
+
+        if (!rs || !ti || !ch) {
+            return;
+        }
+
+        let state = rs.value === "on" ? true : false;
+        let time = ti.value;
+        let weekdays = [false, false, false, false, false, false, false];
+        let checkboxes = ch.querySelectorAll('input[type="checkbox"]');
+
+        const daysChecked = {
+            "mon": 1,
+            "tue": 2,
+            "wed": 3,
+            "thu": 4,
+            "fri": 5,
+            "sat": 6,
+            "sun": 0
+        };
+        checkboxes.forEach(checkbox => {
+            let dayname = checkbox.value;
+            if (checkbox.checked) {
+                weekdays[daysChecked[dayname]] = true;
+            }
+        });
+
+        fetch(`/api/relay-alarm?relayId=${relayID}&alarmId=${ruleID}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                state: state,
+                time: time,
+                weekdays: weekdays
+            })
+        })
+            .then(response => {
+                if (response.ok) {
+                    console.log('Rule updated');
+                } else {
+                    alert('Failed to update the rule.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred.');
+            });
+    }
+
 
     // Function to update the relay-alarm-rules section
     function updateAllRelayAlarmRules(relays) {
