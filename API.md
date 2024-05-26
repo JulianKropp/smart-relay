@@ -341,8 +341,13 @@ This API backend serves as the interface between the frontend interface for cont
 - **Body**:
   ```json
   {
-    "time": "11:32:45", 
-    "date": "2024-07-23"
+    "hour": 11,
+    "minute": 32,
+    "second": 45,
+    "day": 23,
+    "month": 7,
+    "year": 2024,
+    "weekday": 5
   }
   ```
 
