@@ -8,6 +8,9 @@
 #include <ArduinoJson.h>
 #include <Update.h>
 #include <DNSServer.h>
+#include <algorithm>
+
+#define UPDATE_CHUNK_SIZE 1024
 
 // settings
 String systemName = "Smart Relays";
@@ -56,6 +59,8 @@ void calculateNextAlarm();
 void setup()
 {
     Serial.begin(115200);
+
+    Serial.println("LETS GOOOOO");
 
     // Initialize the RTC
     rtc.begin();
@@ -882,40 +887,54 @@ void handleUpdateServerTime()
     }
 }
 
-void handleFirmwareUpdate()
-{
-    HTTPUpload &upload = server.upload();
+void handleFirmwareUpdate() {
+    size_t freeHeap = ESP.getFreeHeap();
+    Serial.printf("Free Heap: %u\n", freeHeap);
 
-    if (upload.status == UPLOAD_FILE_START)
-    {
+
+    HTTPUpload& upload = server.upload();
+    static bool isFSUpdate = false;
+
+    if (upload.status == UPLOAD_FILE_START) {
         Serial.printf("Update: %s\n", upload.filename.c_str());
-        if (!Update.begin(UPDATE_SIZE_UNKNOWN))
-        {
-            Update.printError(Serial);
+        if (upload.filename.endsWith(".bin")) {
+            isFSUpdate = false;
+            Serial.println("Firmware update started");
+            if (!Update.begin(UPDATE_SIZE_UNKNOWN, U_FLASH)) {
+                Update.printError(Serial);
+            }
+        } else if (upload.filename.endsWith(".spiffs") || upload.filename.endsWith(".littlefs")) {
+            isFSUpdate = true;
+            Serial.println("Filesystem update started");
+            if (!Update.begin(UPDATE_SIZE_UNKNOWN, U_SPIFFS)) {
+                Update.printError(Serial);
+            }
+        } else {
+            Serial.println("Unknown file type");
+            server.send(400, "application/json", "{\"error\": \"Invalid file type\"}");
+            return;
         }
-    }
-    else if (upload.status == UPLOAD_FILE_WRITE)
-    {
-        if (Update.write(upload.buf, upload.currentSize) != upload.currentSize)
-        {
-            Update.printError(Serial);
+    } else if (upload.status == UPLOAD_FILE_WRITE) {
+        size_t written = 0;
+        Serial.printf("Writing to update: %u bytes\n", upload.currentSize);
+        while (written < upload.currentSize) {
+            size_t chunkSize = min(UPDATE_CHUNK_SIZE, (int)(upload.currentSize - written));
+            size_t bytesWritten = Update.write(upload.buf + written, chunkSize);
+            Serial.printf("Bytes written: %u/%u\n", written, upload.currentSize);
+            if (bytesWritten != chunkSize) {
+                Update.printError(Serial);
+                return;
+            }
+            written += bytesWritten;
         }
-    }
-    else if (upload.status == UPLOAD_FILE_END)
-    {
-        if (Update.end(true))
-        {
+    } else if (upload.status == UPLOAD_FILE_END) {
+        if (Update.end(true)) {
             Serial.printf("Update Success: %u bytes\n", upload.totalSize);
-            server.send(200, "application/json", "{\"message\": \"Firmware updated successfully\"}");
-        }
-        else
-        {
+        } else {
             Update.printError(Serial);
-            server.send(400, "application/json", "{\"error\": \"Invalid firmware file\"}");
         }
-    }
-    else
-    {
-        server.send(400, "application/json", "{\"error\": \"Invalid firmware file\"}");
+    } else {
+        Serial.println("Invalid file upload status");
+        server.send(400, "application/json", "{\"error\": \"Invalid file upload\"}");
     }
 }
