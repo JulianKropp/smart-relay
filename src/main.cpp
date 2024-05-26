@@ -42,7 +42,6 @@ void handleGetRelayAlarms();   // - **Endpoint**: `/api/relay-alarms?relayId=:re
 void handleCreateRelayAlarm(); // - **Endpoint**: `/api/relay-alarm` POST
 void handleUpdateRelayAlarm(); // - **Endpoint**: `/api/relay-alarm?relayId=:relayId&alarmId=:alarmId` PUT
 void handleDeleteRelayAlarm(); // - **Endpoint**: `/api/relay-alarm?relayId=:relayId&alarmId=:alarmId` DELETE
-void handleNetworkInfo();      // - **Endpoint**: `/api/network-info` GET
 void handleServerTime();       // - **Endpoint**: `/api/server-time` GET
 void handleUpdateServerTime(); // - **Endpoint**: `/api/server-time` POST
 void handleFirmwareUpdate();   // - **Endpoint**: `/api/update-firmware` POST
@@ -116,7 +115,6 @@ void setup()
     server.on("/api/relay-alarm", HTTP_DELETE, handleDeleteRelayAlarm);
     server.on("/api/server-time", HTTP_GET, handleServerTime);
     server.on("/api/server-time", HTTP_POST, handleUpdateServerTime);
-    server.on("/api/network-info", HTTP_GET, handleNetworkInfo);
     server.on("/api/update-firmware", HTTP_POST, handleFirmwareUpdate);
 
     // Start the server
@@ -788,27 +786,6 @@ void handleDeleteRelayAlarm()
 
         String response;
         serializeJson(responseDoc, response);
-        sendJsonResponse(200, response);
-    }
-    catch (const std::exception &e)
-    {
-        sendJsonResponse(500, "{ \"error\": \"" + String(e.what()) + "\"}");
-    }
-}
-
-// - **Endpoint**: `/api/network-info` GET
-void handleNetworkInfo()
-{
-    try
-    {
-        StaticJsonDocument<200> doc;
-        doc["ssid"] = WiFi.SSID();
-        doc["ipAddress"] = WiFi.localIP().toString();
-        doc["gateway"] = WiFi.gatewayIP().toString();
-        doc["dns"] = WiFi.dnsIP().toString();
-
-        String response;
-        serializeJson(doc, response);
         sendJsonResponse(200, response);
     }
     catch (const std::exception &e)

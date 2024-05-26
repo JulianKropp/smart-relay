@@ -388,15 +388,6 @@ document.addEventListener("DOMContentLoaded", function () {
             });
     }
 
-    // Load network information on page load
-    fetch("/api/network-info")
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById("ip-status").textContent = data.ipAddress;
-            document.getElementById("gateway-status").textContent = data.gateway;
-            document.getElementById("dns-status").textContent = data.dns;
-        });
-
     // Upload a file when the upload button is clicked
     document.getElementById("update-button").addEventListener("click", function () {
         const fileInput = document.getElementById("update-file");
