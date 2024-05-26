@@ -782,3 +782,23 @@ void handleDeleteRelayAlarm()
     }
 }
 
+// - **Endpoint**: `/api/network-info` GET
+void handleNetworkInfo()
+{
+    try
+    {
+        StaticJsonDocument<200> doc;
+        doc["ssid"] = WiFi.SSID();
+        doc["ipAddress"] = WiFi.localIP().toString();
+        doc["gateway"] = WiFi.macAddress();
+        doc["dns"] = WiFi.dnsIP().toString();
+
+        String response;
+        serializeJson(doc, response);
+        sendJsonResponse(200, response);
+    }
+    catch (const std::exception &e)
+    {
+        sendJsonResponse(500, "{ \"error\": \"" + String(e.what()) + "\"}");
+    }
+}
