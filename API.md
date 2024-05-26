@@ -159,7 +159,7 @@ This API backend serves as the interface between the frontend interface for cont
 
 ### Request
 
-- **Endpoint**: `/api/relay-alarms/:relayId`
+- **Endpoint**: `/api/relay-alarms?relayId=:relayId`
 - **Method**: GET
 
 ### Successful Response
@@ -172,13 +172,13 @@ This API backend serves as the interface between the frontend interface for cont
           "id": 1,
           "state": true,
           "time": "06:00:00",
-          "days": ["mon", "wed", "fri"]
+          "weekdays": [true, false, true, false, true, false, true] // [sun, mon, tue, wed, thu, fri, sat]
       },
       {
           "id": 2,
           "state": false,
           "time": "22:00:00",
-          "days": ["tue", "thu", "sat", "sun"]
+          "weekdays": [true, false, true, false, true, false, true] // [sun, mon, tue, wed, thu, fri, sat]
       }
   ]
   ```
@@ -205,7 +205,7 @@ This API backend serves as the interface between the frontend interface for cont
       "relayId": 1,
       "state": true, // or false
       "time": "06:00:00",
-      "days": ["mon", "wed", "fri"]
+      "weekdays": [true, false, true, false, true, false, true] // [sun, mon, tue, wed, thu, fri, sat
   }
   ```
 
@@ -242,14 +242,14 @@ This API backend serves as the interface between the frontend interface for cont
 
 ### Request
 
-- **Endpoint**: `/api/relay-alarm/:relayId/:ruleId`
+- **Endpoint**: `/api/relay-alarm?relayId=:relayId?alarmId=:alarmId`
 - **Method**: PUT
 - **Body**:
   ```json
   {
       "state": false, // or true
       "time": "22:00:00",
-      "days": ["tue", "thu", "sat", "sun"]
+      "weekdays": [true, false, true, false, true, false, true] // [sun, mon, tue, wed, thu, fri, sat
   }
   ```
 
@@ -285,7 +285,7 @@ This API backend serves as the interface between the frontend interface for cont
 
 ### Request
 
-- **Endpoint**: `/api/relay-alarm/:relayId/:ruleId`
+- **Endpoint**: `/api/relay-alarm?relayId=:relayId?alarmId=:alarmId`
 - **Method**: DELETE
 
 ### Successful Response
