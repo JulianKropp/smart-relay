@@ -88,10 +88,8 @@ This API backend serves as the interface between the frontend interface for cont
   ```json
   {
       "systemName": "Smart Relays",
-      "wifiName": "YourWiFiName",
       "systemTime": "11:32:45",
       "systemDate": "2024-07-23",
-      "syncTime": true,
       "relays": [
         {
             "id": 1,
@@ -117,11 +115,6 @@ This API backend serves as the interface between the frontend interface for cont
   ```json
   {
       "systemName": "New System Name",
-      "wifiName": "New WiFi Name",
-      "wifiPassword": "New WiFi Password",
-      "systemTime": "14:30:00",
-      "systemDate": "2024-05-13",
-      "syncTime": true, // or false
       "relays": [
         {
             "id": 1,
@@ -350,6 +343,37 @@ This API backend serves as the interface between the frontend interface for cont
     "weekday": 5
   }
   ```
+
+## Server Time Update
+
+### Request
+
+- **Endpoint**: `/api/server-time`
+- **Method**: POST
+
+  ```json
+  {
+    "hourAdjustment":0,
+    "minuteAdjustment":0,
+    "secondAdjustment":1,
+    "date":"2024-05-26"
+  }
+  ```
+
+### Successful Response
+  ```json
+  {
+    "message": "[Time updated successfully](http://192.168.4.1/api/server-time)"
+  }
+  ```
+
+### Error Responses
+  ```json
+  {
+    "error": "Invalid data provided"
+  }
+  ```
+
 
 ## Firmware Update
 

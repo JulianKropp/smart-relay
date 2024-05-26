@@ -11,10 +11,7 @@
 
 // settings
 String systemName = "Smart Relays";
-String wifiName = "";
-String wifiPassword = "";
-bool syncTime = false;
-const char *APssid = "ESP32-Access-Point";
+const char *APssid = "Smart-Relays";
 const char *APpassword = NULL;
 IPAddress APip(192, 168, 4, 1);
 IPAddress APsubnet(255, 255, 255, 0);
@@ -46,6 +43,7 @@ void handleUpdateRelayAlarm(); // - **Endpoint**: `/api/relay-alarm?relayId=:rel
 void handleDeleteRelayAlarm(); // - **Endpoint**: `/api/relay-alarm?relayId=:relayId&alarmId=:alarmId` DELETE
 void handleNetworkInfo();      // - **Endpoint**: `/api/network-info` GET
 void handleServerTime();       // - **Endpoint**: `/api/server-time` GET
+void handleUpdateServerTime(); // - **Endpoint**: `/api/server-time` POST
 void handleFirmwareUpdate();   // - **Endpoint**: `/api/update-firmware` POST
 void sendJsonResponse(int status, const String &message);
 
@@ -84,40 +82,21 @@ void setup()
 
     // Captive portal
     server.on("/connecttest.txt", []()
-              {
-        server.sendHeader("Location", "http://logout.net", true);
-        server.send(302, "text/html", ""); }); // windows 11 captive portal workaround
-
+              { server.sendHeader("Location", "http://logout.net", true); server.send(302, "text/html", ""); }); // windows 11 captive portal workaround
     server.on("/wpad.dat", []()
-              { server.send(404); }); // Honestly don't understand what this is but a 404 stops win 10 keep calling this repeatedly and panicking the esp32 :)
-
+              { server.send(404); }); // win 10
     server.on("/generate_204", []()
-              {
-        server.sendHeader("Location", localIPURL, true);
-        server.send(302, "text/html", ""); }); // android captive portal redirect
-
+              { server.sendHeader("Location", localIPURL, true); server.send(302, "text/html", ""); }); // android captive portal redirect
     server.on("/redirect", []()
-              {
-        server.sendHeader("Location", localIPURL, true);
-        server.send(302, "text/html", ""); }); // microsoft redirect
-
+              { server.sendHeader("Location", localIPURL, true); server.send(302, "text/html", ""); }); // microsoft redirect
     server.on("/hotspot-detect.html", []()
-              {
-        server.sendHeader("Location", localIPURL, true);
-        server.send(302, "text/html", ""); }); // apple call home
-
+              { server.sendHeader("Location", localIPURL, true); server.send(302, "text/html", ""); }); // apple call home
     server.on("/canonical.html", []()
-              {
-        server.sendHeader("Location", localIPURL, true);
-        server.send(302, "text/html", ""); }); // firefox captive portal call home
-
+              { server.sendHeader("Location", localIPURL, true); server.send(302, "text/html", ""); }); // firefox captive portal call home
     server.on("/success.txt", []()
               { server.send(200); }); // firefox captive portal call home
-
     server.on("/ncsi.txt", []()
-              {
-        server.sendHeader("Location", localIPURL, true);
-        server.send(302, "text/html", ""); }); // windows call home
+              { server.sendHeader("Location", localIPURL, true); server.send(302, "text/html", ""); }); // windows call home
 
     // API
     server.on("/api/all-relays", HTTP_GET, handleGetAllRelays);
@@ -129,6 +108,7 @@ void setup()
     server.on("/api/relay-alarm", HTTP_PUT, handleUpdateRelayAlarm);
     server.on("/api/relay-alarm", HTTP_DELETE, handleDeleteRelayAlarm);
     server.on("/api/server-time", HTTP_GET, handleServerTime);
+    server.on("/api/server-time", HTTP_POST, handleUpdateServerTime);
     server.on("/api/network-info", HTTP_GET, handleNetworkInfo);
     server.on("/api/update-firmware", HTTP_POST, handleFirmwareUpdate);
 
@@ -142,7 +122,6 @@ void loop()
 {
     dnsServer.processNextRequest();
     server.handleClient();
-    delay(30);
 }
 
 // Utility functions
@@ -231,6 +210,10 @@ String CreateJsonFromString(const String &body, const std::map<String, String> &
         }
 
         if (type == "uint" && !doc[key].is<uint>())
+        {
+            return "Invalid type for key: " + key;
+        }
+        else if (type == "int" && !doc[key].is<int>())
         {
             return "Invalid type for key: " + key;
         }
@@ -358,8 +341,6 @@ void handleSystemSettings()
 
         StaticJsonDocument<200> doc;
         doc["systemName"] = systemName;
-        doc["wifiName"] = wifiName;
-        doc["wifiPassword"] = wifiPassword;
         doc["systemTime"] = String(now.hour()) + ":" + String(now.minute()) + ":" + String(now.second());
 
         // Format month and day with leading zeros
@@ -371,7 +352,6 @@ void handleSystemSettings()
             day = "0" + day;
 
         doc["systemDate"] = String(now.year()) + "-" + month + "-" + day;
-        doc["syncTime"] = syncTime;
 
         JsonArray relaysArray = doc.createNestedArray("relays");
         std::vector<uint> relayIDs = relayManager.getRelayIDs();
@@ -412,7 +392,6 @@ void handleUpdateSettings()
             {"wifiPassword", "string"},
             {"systemTime", "string"},
             {"systemDate", "string"},
-            {"syncTime", "bool"},
             {"relays", "array"}};
 
         // Allocate memory for the JsonDocument
@@ -427,11 +406,8 @@ void handleUpdateSettings()
         }
 
         systemName = doc["systemName"].as<String>();
-        wifiName = doc["wifiName"].as<String>();
-        wifiPassword = doc["wifiPassword"].as<String>();
         String systemTime = doc["systemTime"].as<String>();
         String systemDate = doc["systemDate"].as<String>();
-        syncTime = doc["syncTime"].as<bool>();
 
         // Update relays
         for (auto relay : doc["relays"].as<JsonArray>())
@@ -445,34 +421,19 @@ void handleUpdateSettings()
             }
         }
 
-        // update wifi settings
-        // TODO: IF wifi name & password != empty: Then Stop AP and try connecting to wifi. If it doesnt work then start AP again
+        // Set the time
+        int year = systemDate.substring(0, 4).toInt();
+        int month = systemDate.substring(5, 7).toInt();
+        int day = systemDate.substring(8, 10).toInt();
+        int hour = systemTime.substring(0, 2).toInt();
+        int minute = systemTime.substring(3, 5).toInt();
+        int second = systemTime.substring(6, 8).toInt();
 
-        // If syncTime is false, then set the time
-        if (!syncTime)
-        {
-            // Set the time
-            int year = systemDate.substring(0, 4).toInt();
-            int month = systemDate.substring(5, 7).toInt();
-            int day = systemDate.substring(8, 10).toInt();
-            int hour = systemTime.substring(0, 2).toInt();
-            int minute = systemTime.substring(3, 5).toInt();
-            int second = systemTime.substring(6, 8).toInt();
-
-            rtc.setDateTime(DateTime(year, month, day, hour, minute, second));
-        }
-        else
-        {
-            // Sync time over NTP
-            // TODO: Implement NTP sync
-        }
+        rtc.setDateTime(DateTime(year, month, day, hour, minute, second));
 
         // Save data to NVS
         ConfigManager &cm = ConfigManager::getInstance();
         cm.setConfig("systemName", systemName);
-        cm.setConfig("wifiName", wifiName);
-        cm.setConfig("wifiPassword", wifiPassword);
-        cm.setConfig("syncTime", String(syncTime));
 
         StaticJsonDocument<200> responseDoc;
         responseDoc["message"] = "Settings updated successfully";
@@ -812,6 +773,60 @@ void handleServerTime()
 
         String response;
         serializeJson(doc, response);
+        sendJsonResponse(200, response);
+    }
+    catch (const std::exception &e)
+    {
+        sendJsonResponse(500, "{ \"error\": \"" + String(e.what()) + "\"}");
+    }
+}
+
+// - **Endpoint**: `/api/server-time` POST
+void handleUpdateServerTime()
+{
+    try
+    {
+        // Get body
+        String body = server.arg("plain");
+
+        // Define required keys and their types
+        std::map<String, String> requiredKeys = {
+            {"hourAdjustment", "int"},
+            {"minuteAdjustment", "int"},
+            {"secondAdjustment", "int"},
+            {"date", "string"}};
+
+        // Allocate memory for the JsonDocument
+        StaticJsonDocument<256> doc; // Adjust size as needed
+
+        // Validate and create JSON document from string
+        String validationError = CreateJsonFromString(body, requiredKeys, doc);
+        if (validationError != "")
+        {
+            sendJsonResponse(400, "{ \"error\": \"" + validationError + "\"}");
+            return;
+        }
+
+        DateTime now = rtc.now();
+
+        // Get hour, minute, second, day, month, year
+        int hourAdjustment = (doc["hourAdjustment"].as<int>() + now.hour()) % 24;
+        int minuteAdjustment = (doc["minuteAdjustment"].as<int>() + now.minute()) % 60;
+        int secondAdjustment = (doc["secondAdjustment"].as<int>() + now.second()) % 60;
+        String systemDate = doc["date"].as<String>();
+        int year = systemDate.substring(0, 4).toInt();
+        int month = systemDate.substring(5, 7).toInt();
+        int day = systemDate.substring(8, 10).toInt();
+
+        // Set the time
+        rtc.setDateTime(DateTime(year, month, day, hourAdjustment, minuteAdjustment, secondAdjustment));
+
+        // Create response
+        StaticJsonDocument<200> responseDoc;
+        responseDoc["message"] = "Server time updated successfully";
+
+        String response;
+        serializeJson(responseDoc, response);
         sendJsonResponse(200, response);
     }
     catch (const std::exception &e)

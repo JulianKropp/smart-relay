@@ -64,15 +64,15 @@
     border-radius: 50%;
 }
 
-.relay-checkbox:checked + .toggle-label {
+.relay-checkbox:checked+.toggle-label {
     background-color: #4CAF50;
 }
 
-.relay-checkbox:checked + .toggle-label:before {
+.relay-checkbox:checked+.toggle-label:before {
     transform: translateX(44px);
 }
 
-.relay-checkbox:focus + .toggle-label {
+.relay-checkbox:focus+.toggle-label {
     box-shadow: 0 0 1px #2196F3;
 }
 
@@ -133,11 +133,12 @@ body {
     margin: 20px auto;
     background-color: white;
     padding: 20px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     border-radius: 10px;
 }
 
-.settings-form h2, .settings-form h3 {
+.settings-form h2,
+.settings-form h3 {
     text-align: center;
 }
 
@@ -148,8 +149,6 @@ body {
 }
 
 .settings-form input[type="text"],
-.settings-form input[type="password"],
-.settings-form input[type="time"],
 .settings-form input[type="date"] {
     width: 100%;
     padding: 8px;
@@ -162,15 +161,60 @@ body {
 .time-date-container {
     display: flex;
     justify-content: space-between;
-    gap: 10px; /* Abstand zwischen Zeit- und Datumsfeldern */
+    gap: 10px;
+    /* Abstand zwischen Zeit- und Datumsfeldern */
 }
 
-.time-container, .date-container {
+.time-container,
+.date-container {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
-.add-rule, .delete-rule {
-    background-color: #f44336; /* Red */
+.time-inputs {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.time-adjust {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 5px;
+}
+
+.time-adjust button {
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    padding: 5px;
+    margin: 2px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.time-adjust button:hover {
+    background-color: #0056b3;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.time-adjust input {
+    width: 50px;
+    text-align: center;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin: 2px;
+    padding: 5px;
+}
+
+.add-rule,
+.delete-rule {
+    background-color: #f44336;
+    /* Red */
     color: white;
     padding: 10px 20px;
     border: none;
@@ -213,10 +257,12 @@ button.cancel-delete {
 }
 
 .add-rule {
-    background-color: #4CAF50; /* Green */
+    background-color: #4CAF50;
+    /* Green */
 }
 
-.add-rule:hover, .delete-rule:hover {
+.add-rule:hover,
+.delete-rule:hover {
     opacity: 0.8;
 }
 
@@ -237,12 +283,14 @@ button.cancel-delete {
 
 .input-group {
     display: flex;
-    align-items: center; /* Ensure vertical alignment */
+    align-items: center;
+    /* Ensure vertical alignment */
     justify-content: space-between;
     width: 100%;
 }
 
-.select-style, .time-input {
+.select-style,
+.time-input {
     padding: 8px;
     border: 1px solid #ccc;
     border-radius: 4px;
@@ -279,7 +327,8 @@ button.cancel-delete {
 }
 
 .submit-button {
-    background-color: #4CAF50; /* Green */
+    background-color: #4CAF50;
+    /* Green */
     color: white;
     padding: 14px 20px;
     margin: 10px 0;
@@ -340,7 +389,8 @@ button.cancel-delete {
         width: 100%;
     }
 
-    .select-style, .time-input {
+    .select-style,
+    .time-input {
         width: 100%;
         margin: 5px 0;
     }
@@ -359,5 +409,22 @@ button.cancel-delete {
     .confirm-cancel-buttons button {
         width: 100%;
         margin: 5px 0;
+    }
+
+    .time-date-container {
+        flex-direction: column;
+    }
+
+    .time-adjust {
+        flex-direction: row;
+        justify-content: center;
+    }
+
+    .time-adjust input {
+        margin: 0 5px;
+    }
+
+    .time-inputs {
+        flex-direction: column;
     }
 }

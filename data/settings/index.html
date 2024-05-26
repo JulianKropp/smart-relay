@@ -14,39 +14,41 @@
         <a href="/" id="back-button" class="back-button">Back</a>
     </div>
 
-
-
     <div id="relay-alarm-rules" class="settings-form">
         <h2 id="relay-heading">Alarm rules</h2>
         <!--rart.html will be inserted here-->
     </div>
 
-
-
-
     <div id="general-settings" class="settings-form">
         <h2 id="general-settings-heading">General Settings</h2>
         <label for="system-name">Name:</label>
         <input type="text" id="system-name" name="systemName" value="Smart Relays">
-        <label for="wifi-name">Wi-Fi Name:</label>
-        <input type="text" id="wifi-name" name="wifiName" placeholder="Enter Wi-Fi name">
-        <label for="wifi-password">Wi-Fi Password:</label>
-        <input type="password" id="wifi-password" name="wifiPassword" placeholder="Enter Wi-Fi password">
 
         <div id="time-date" class="time-date-container">
             <div id="time" class="time-container">
                 <label for="system-time">Time:</label>
-                <input type="time" id="system-time" name="systemTime" value="11:32:45">
+                <div class="time-inputs">
+                    <div id="time-hour" class="time-adjust">
+                        <button onclick="adjustTime('hour', 1)">+</button>
+                        <p id="system-time-hour" name="systemTime">0</p>
+                        <button onclick="adjustTime('hour', -1)">-</button>
+                    </div>
+                    <div id="time-minute" class="time-adjust">
+                        <button onclick="adjustTime('minute', 1)">+</button>
+                        <p id="system-time-minute" name="systemTime">0</p>
+                        <button onclick="adjustTime('minute', -1)">-</button>
+                    </div>
+                    <div id="time-second" class="time-adjust">
+                        <button onclick="adjustTime('second', 1)">+</button>
+                        <p id="system-time-second" name="systemTime">0</p>
+                        <button onclick="adjustTime('second', -1)">-</button>
+                    </div>
+                </div>
             </div>
             <div id="date" class="date-container">
                 <label for="system-date">Date:</label>
                 <input type="date" id="system-date" name="systemDate" value="2024-07-23">
             </div>
-        </div>
-
-        <div id="sync-time">
-            <input type="checkbox" id="sync-time-checkbox" name="syncTime">
-            <label for="sync-time-checkbox">Sync automatically with internet time</label>
         </div>
         <div id="relay-names">
             <h3 id="relay-names-heading">Relay Names</h3>
@@ -62,8 +64,6 @@
 
     <div id="network-info" class="settings-form">
         <h2 id="network-info-heading">Network Info</h2>
-        <label for="wifi-status">Wi-Fi Mode:</label>
-        <p id="wifi-status">Connected</p>
         <label for="ip-status">IP Address:</label>
         <p id="ip-status">123.123.123.123</p>
         <label for="gateway-status">Gateway:</label>

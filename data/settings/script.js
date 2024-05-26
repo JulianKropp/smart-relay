@@ -266,11 +266,8 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(response => response.json())
         .then(data => {
             document.getElementById("system-name").value = data.systemName;
-            document.getElementById("wifi-name").value = data.wifiName;
             document.getElementById("system-time").value = data.systemTime;
             document.getElementById("system-date").value = data.systemDate;
-            document.getElementById("sync-time-checkbox").checked = data.syncTime;
-            onChangeSyncTimeCheckbox();
 
             const relayNamesDiv = document.getElementById('relay-names');
             if (!relayNamesDiv) {
@@ -300,11 +297,6 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("save-general-settings").addEventListener("click", function () {
         const settings = {
             systemName: document.getElementById("system-name").value,
-            wifiName: document.getElementById("wifi-name").value,
-            wifiPassword: document.getElementById("wifi-password").value,
-            systemTime: document.getElementById("system-time").value,
-            systemDate: document.getElementById("system-date").value,
-            syncTime: document.getElementById("sync-time-checkbox").checked,
             relays: []
         };
 
@@ -330,46 +322,6 @@ document.addEventListener("DOMContentLoaded", function () {
             .catch(error => {
                 alert("Failed to save settings.");
             });
-    });
-
-    function onChangeSyncTimeCheckbox() {
-        if (document.getElementById("sync-time-checkbox").checked) {
-            //  when checked make the time and date uneditable
-            document.getElementById("system-time").readOnly = true;
-            document.getElementById("system-date").readOnly = true;
-
-            // Sync time every second
-            this.syncTimeInterval = setInterval(() => {
-                fetch("/api/server-time")
-                    .then(response => response.json())
-                    .then(data => {
-                        /*
-                            ```json
-                            {
-                                "time": "11:32:45", 
-                                "date": "2024-07-23"
-                            }
-                            ```
-                        */
-                        time = data.time.split(":");
-                        date = data.date.split("-");
-
-                        document.getElementById("system-time").value = `${time[0]}:${time[1]}:${time[2]}`;
-                        document.getElementById("system-date").value = `${date[0]}-${date[1]}-${date[2]}`;
-                    });
-            }, 1000);
-        } else {
-            // when unchecked make the time and date editable
-            document.getElementById("system-time").readOnly = false;
-            document.getElementById("system-date").readOnly = false;
-
-            clearInterval(this.syncTimeInterval);
-        }
-    }
-
-    // Sync time automatically when the checkbox is clicked
-    document.getElementById("sync-time-checkbox").addEventListener("change", function () {
-        onChangeSyncTimeCheckbox();
     });
 
     // Upload a file when the upload button is clicked
@@ -402,4 +354,91 @@ document.addEventListener("DOMContentLoaded", function () {
                 .catch(error => console.error('Error fetching relays:', error));
         })
         .catch(error => console.error('Error loading template:', error));
+
+
+
+    // Time
+    // Function to update the time every second
+    function fetchServerTime() {
+        fetch('/api/server-time')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('system-time-hour').textContent = data.hour;
+                document.getElementById('system-time-minute').textContent = data.minute;
+                document.getElementById('system-time-second').textContent = data.second;
+                document.getElementById('system-date').value = `${data.year}-${String(data.month).padStart(2, '0')}-${String(data.day).padStart(2, '0')}`;
+            })
+            .catch(error => console.error('Error fetching server time:', error));
+    }
+
+    // Call fetchServerTime every second
+    setInterval(fetchServerTime, 1000);
+
+    // Function to adjust time
+    function adjustTime(unit, value) {
+        let adjustments = {
+            hourAdjustment: 0,
+            minuteAdjustment: 0,
+            secondAdjustment: 0,
+            date: document.getElementById('system-date').value
+        };
+
+        if (unit === 'hour') {
+            adjustments.hourAdjustment = value;
+        } else if (unit === 'minute') {
+            adjustments.minuteAdjustment = value;
+        } else if (unit === 'second') {
+            adjustments.secondAdjustment = value;
+        }
+
+        fetch('/api/server-time', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(adjustments)
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Time adjusted:', data);
+                fetchServerTime(); // Update the displayed time
+            })
+            .catch(error => console.error('Error adjusting time:', error));
+    }
+
+    // Attach event listeners to the buttons
+    document.querySelectorAll('.time-adjust button').forEach(button => {
+        button.addEventListener('click', (event) => {
+            const unit = event.target.parentElement.id.split('-')[1];
+            const value = event.target.textContent === '+' ? 1 : -1;
+            adjustTime(unit, value);
+        });
+    });
+
+    // Function to adjust date
+    document.getElementById('system-date').addEventListener('change', (event) => {
+        const adjustments = {
+            hourAdjustment: 0,
+            minuteAdjustment: 0,
+            secondAdjustment: 0,
+            date: document.getElementById('system-date').value
+        };
+
+        fetch('/api/server-time', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(adjustments)
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Date adjusted:', data);
+                fetchServerTime(); // Update the displayed date and time
+            })
+            .catch(error => console.error('Error adjusting date:', error));
+    });
+
+    // Initial fetch to set the time and date on page load
+    fetchServerTime();
 });
