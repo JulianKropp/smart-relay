@@ -161,7 +161,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
         fetch(`/api/relay-alarms?relayId=${relay.id}`)
             .then(response => response.json())
-            .then(alarmRules => {
+            .then(alarmRulesob => {
+                let alarmRules = alarmRulesob.alarms;
                 const existingRuleElements = relayDiv.querySelectorAll('.relay-alarm-rule');
                 const existingRuleIds = Array.from(existingRuleElements).map(el => parseInt(el.dataset.ruleIndex, 10));
                 const newRuleIds = alarmRules.map((_, index) => index + 1);
@@ -175,8 +176,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 });
 
                 // Update existing elements and add new ones
-                alarmRules.forEach((rule, ruleIndex) => {
-                    const ruleId = ruleIndex + 1;
+                alarmRules.forEach((rule) => {
+                    const ruleId = rule.id;
                     let ruleElement = relayDiv.querySelector(`.relay-alarm-rule[data-rule-index="${ruleId}"]`);
 
                     if (ruleElement) {
@@ -188,9 +189,18 @@ document.addEventListener("DOMContentLoaded", function () {
                         timeInput.value = rule.time;
 
                         const days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+                        const daysChecked = {
+                            "mon": 1,
+                            "tue": 2,
+                            "wed": 3,
+                            "thu": 4,
+                            "fri": 5,
+                            "sat": 6,
+                            "sun": 0
+                        }
                         days.forEach(day => {
                             const checkbox = ruleElement.querySelector(`input[value="${day}"]`);
-                            checkbox.checked = rule.days.includes(day);
+                            checkbox.checked = rule.weekdays[daysChecked[day]];
                         });
                     } else {
                         // Create new rule element
@@ -243,8 +253,8 @@ document.addEventListener("DOMContentLoaded", function () {
     function loadRelays() {
         fetch('/api/all-relays')
             .then(response => response.json())
-            .then(relays => {
-                updateAllRelayAlarmRules(relays);
+            .then(relaysob => {
+                updateAllRelayAlarmRules(relaysob.relays);
             })
             .catch(error => console.error('Error fetching relays:', error));
     }
@@ -386,9 +396,8 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(() => {
             fetch('/api/all-relays')
                 .then(response => response.json())
-                .then(relays => {
-                    updateAllRelayAlarmRules(relays);
-                    Relays = relays;
+                .then(relaysob => {
+                    updateAllRelayAlarmRules(relaysob.relays);
                 })
                 .catch(error => console.error('Error fetching relays:', error));
         })
