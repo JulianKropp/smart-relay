@@ -215,24 +215,18 @@ void handleGetAllRelays()
 {
     try
     {
-        JsonDocument doc;
+        StaticJsonDocument<500> doc; // Adjust size as needed
         JsonArray relaysArray = doc.createNestedArray("relays");
-
         std::vector<uint> relayIDs = relayManager.getRelayIDs();
         for (uint id : relayIDs)
         {
             Relay *relay = relayManager.getRelayByID(id);
             if (relay != nullptr)
             {
-                String name = relay->getName();
-                bool state = relay->getState();
-
-                JsonDocument relayDoc;
+                JsonObject relayDoc = relaysArray.createNestedObject();
                 relayDoc["id"] = id;
-                relayDoc["name"] = name;
-                relayDoc["state"] = state;
-
-                relaysArray.add(relayDoc);
+                relayDoc["name"] = relay->getName();
+                relayDoc["state"] = relay->getState();
             }
         }
         String response;
@@ -271,10 +265,6 @@ void handleRelayControl()
         uint relayId = doc["relayId"].as<uint>();
         bool state = doc["state"].as<bool>();
 
-        Serial.println("Relay ID: " + String(relayId));
-        Serial.println("State: " + String(state));
-
-        // control relay
         Relay *relay = relayManager.getRelayByID(relayId);
         if (relay != nullptr)
         {
@@ -330,20 +320,17 @@ void handleSystemSettings()
         doc["systemDate"] = String(now.year()) + "-" + month + "-" + day;
         doc["syncTime"] = syncTime;
 
-        std::vector<uint> relayIDs = relayManager.getRelayIDs();
         JsonArray relaysArray = doc.createNestedArray("relays");
+        std::vector<uint> relayIDs = relayManager.getRelayIDs();
         for (uint id : relayIDs)
         {
             Relay *relay = relayManager.getRelayByID(id);
             if (relay != nullptr)
             {
-                String name = relay->getName();
-                bool state = relay->getState();
-
                 JsonObject relayDoc = relaysArray.createNestedObject();
                 relayDoc["id"] = id;
-                relayDoc["name"] = name;
-                relayDoc["state"] = state;
+                relayDoc["name"] = relay->getName();
+                relayDoc["state"] = relay->getState();
             }
         }
 
@@ -452,7 +439,7 @@ void handleGetRelayAlarms()
         Relay *relay = relayManager.getRelayByID(relayId);
         if (relay != nullptr)
         {
-            JsonDocument doc;
+            StaticJsonDocument<500> doc; // Adjust size as needed
             JsonArray alarmsArray = doc.createNestedArray("alarms");
 
             std::vector<uint> alarmIDs = relay->getAlarmIDs();
@@ -461,6 +448,10 @@ void handleGetRelayAlarms()
                 Alarm *alarm = relay->getAlarmByID(id);
                 if (alarm != nullptr)
                 {
+                    JsonObject alarmDoc = alarmsArray.createNestedObject();
+                    alarmDoc["id"] = id;
+                    alarmDoc["state"] = alarm->getState();
+
                     String hour = String(alarm->getHour());
                     String minute = String(alarm->getMinute());
                     String second = String(alarm->getSecond());
@@ -470,24 +461,16 @@ void handleGetRelayAlarms()
                         minute = "0" + minute;
                     if (second.length() == 1)
                         second = "0" + second;
-
-                    std::array<bool, 7> weekdays = alarm->getWeekdays();
-
-                    JsonDocument alarmDoc;
-                    alarmDoc["id"] = id;
-                    alarmDoc["state"] = alarm->getState();
                     alarmDoc["time"] = hour + ":" + minute + ":" + second;
-                    alarmDoc.createNestedArray("weekdays");
+
                     JsonArray weekdaysArray = alarmDoc.createNestedArray("weekdays");
+                    std::array<bool, 7> weekdays = alarm->getWeekdays();
                     for (int i = 0; i < 7; i++)
                     {
                         weekdaysArray.add(weekdays[i]);
                     }
-
-                    alarmsArray.add(alarmDoc);
                 }
             }
-
             String response;
             serializeJson(doc, response);
             sendJsonResponse(200, response);
@@ -575,22 +558,10 @@ void handleCreateRelayAlarm()
             sendJsonResponse(400, "{ \"error\": \"Invalid 'time' format\"}");
             return;
         }
-        // Convert time parts to integers and check if they are valid
-        uint hour;
-        uint minute;
-        uint second;
-        try
-        {
-            hour = timeParts[0].toInt();
-            minute = timeParts[1].toInt();
-            second = timeParts[2].toInt();
-            if (hour > 23 || minute > 59 || second > 59)
-            {
-                sendJsonResponse(400, "{ \"error\": \"Invalid time values\"}");
-                return;
-            }
-        }
-        catch (const std::exception &e)
+        uint hour = timeParts[0].toInt();
+        uint minute = timeParts[1].toInt();
+        uint second = timeParts[2].toInt();
+        if (hour > 23 || minute > 59 || second > 59)
         {
             sendJsonResponse(400, "{ \"error\": \"Invalid time values\"}");
             return;
@@ -698,22 +669,10 @@ void handleUpdateRelayAlarm()
             return;
         }
 
-        // Convert time parts to integers and check if they are valid
-        uint hour;
-        uint minute;
-        uint second;
-        try
-        {
-            hour = timeParts[0].toInt();
-            minute = timeParts[1].toInt();
-            second = timeParts[2].toInt();
-            if (hour > 23 || minute > 59 || second > 59)
-            {
-                sendJsonResponse(400, "{ \"error\": \"Invalid time values\"}");
-                return;
-            }
-        }
-        catch (const std::exception &e)
+        uint hour = timeParts[0].toInt();
+        uint minute = timeParts[1].toInt();
+        uint second = timeParts[2].toInt();
+        if (hour > 23 || minute > 59 || second > 59)
         {
             sendJsonResponse(400, "{ \"error\": \"Invalid time values\"}");
             return;
@@ -790,7 +749,7 @@ void handleNetworkInfo()
         StaticJsonDocument<200> doc;
         doc["ssid"] = WiFi.SSID();
         doc["ipAddress"] = WiFi.localIP().toString();
-        doc["gateway"] = WiFi.macAddress();
+        doc["gateway"] = WiFi.gatewayIP().toString();
         doc["dns"] = WiFi.dnsIP().toString();
 
         String response;
@@ -829,28 +788,40 @@ void handleServerTime()
     }
 }
 
-// - **Endpoint**: `/api/update-firmware` POST
-void handleFirmwareUpdate() {
-  HTTPUpload& upload = server.upload();
+void handleFirmwareUpdate()
+{
+    HTTPUpload &upload = server.upload();
 
-  if (upload.status == UPLOAD_FILE_START) {
-    Serial.printf("Update: %s\n", upload.filename.c_str());
-    if (!Update.begin(UPDATE_SIZE_UNKNOWN)) {
-      Update.printError(Serial);
+    if (upload.status == UPLOAD_FILE_START)
+    {
+        Serial.printf("Update: %s\n", upload.filename.c_str());
+        if (!Update.begin(UPDATE_SIZE_UNKNOWN))
+        {
+            Update.printError(Serial);
+        }
     }
-  } else if (upload.status == UPLOAD_FILE_WRITE) {
-    if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
-      Update.printError(Serial);
+    else if (upload.status == UPLOAD_FILE_WRITE)
+    {
+        if (Update.write(upload.buf, upload.currentSize) != upload.currentSize)
+        {
+            Update.printError(Serial);
+        }
     }
-  } else if (upload.status == UPLOAD_FILE_END) {
-    if (Update.end(true)) {
-      Serial.printf("Update Success: %u bytes\n", upload.totalSize);
-      server.send(200, "application/json", "{\"message\": \"Firmware updated successfully\"}");
-    } else {
-      Update.printError(Serial);
-      server.send(400, "application/json", "{\"error\": \"Invalid firmware file\"}");
+    else if (upload.status == UPLOAD_FILE_END)
+    {
+        if (Update.end(true))
+        {
+            Serial.printf("Update Success: %u bytes\n", upload.totalSize);
+            server.send(200, "application/json", "{\"message\": \"Firmware updated successfully\"}");
+        }
+        else
+        {
+            Update.printError(Serial);
+            server.send(400, "application/json", "{\"error\": \"Invalid firmware file\"}");
+        }
     }
-  } else {
-    server.send(400, "application/json", "{\"error\": \"Invalid firmware file\"}");
-  }
+    else
+    {
+        server.send(400, "application/json", "{\"error\": \"Invalid firmware file\"}");
+    }
 }
