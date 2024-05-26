@@ -4,8 +4,8 @@
 
 uint Alarm::idCounter = 0;
 
-Alarm::Alarm(uint hour, uint minute, uint second, std::array<bool, 7> weekdays, Relay *relay)
-    : hour(hour), minute(minute), second(second), weekdays(weekdays), relay(relay)
+Alarm::Alarm(uint hour, uint minute, uint second, std::array<bool, 7> weekdays, Relay *relay, bool state)
+    : hour(hour), minute(minute), second(second), weekdays(weekdays), relay(relay), state(state)
 {
     this->id = Alarm::idCounter++;
 }
@@ -30,6 +30,7 @@ Alarm::Alarm(String json, Relay *relay)
         weekdays[counter++] = v.as<bool>();
     }
     this->relay = relay;
+    state = doc["state"].as<bool>();
 }
 
 int Alarm::getId()
@@ -62,6 +63,11 @@ Relay *Alarm::getRelay() const
     return relay;
 }
 
+bool Alarm::getState() const
+{
+    return state;
+}
+
 void Alarm::setHour(const uint hour)
 {
     this->hour = hour;
@@ -85,6 +91,11 @@ void Alarm::setWeekdays(const std::array<bool, 7> weekdays)
 void Alarm::setRelay(Relay *relay)
 {
     this->relay = relay;
+}
+
+void Alarm::setState(bool state)
+{
+    this->state = state;
 }
 
 uint Alarm::getNextAlarminSeconds(DateTime now) const
@@ -126,6 +137,7 @@ String Alarm::toJson() const
         doc["weekdays"].add(weekday);
     }
     doc["relay"] = relay->getId();
+    doc["state"] = state;
     String jsonString;
     serializeJson(doc, jsonString);
     return jsonString;

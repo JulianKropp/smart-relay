@@ -33,7 +33,7 @@ class Relay {
         void On();
         void Off();
 
-        Alarm* addAlarm(uint hour, uint minute, uint second, std::array<bool, 7> weekdays);
+        Alarm* addAlarm(uint hour, uint minute, uint second, std::array<bool, 7> weekdays, bool state);
         void removeAlarm(const uint id);
         vector<uint> getAlarmIDs() const;
         Alarm* getAlarmByID(const uint id) const;

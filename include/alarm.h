@@ -18,10 +18,11 @@ class Alarm {
         uint hour = 0;
         uint minute = 0;
         uint second = 0;
+        bool state = false;
         std::array<bool, 7> weekdays = {false, false, false, false, false, false, false}; // Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday
 
     public:
-        Alarm(uint hour, uint minute, uint second, std::array<bool, 7> weekdays, Relay* relay);
+        Alarm(uint hour, uint minute, uint second, std::array<bool, 7> weekdays, Relay* relay, bool state);
         Alarm(String json, Relay *relay);
 
         // get methods
@@ -31,6 +32,7 @@ class Alarm {
         uint getSecond() const;
         std::array<bool, 7> getWeekdays() const;
         Relay* getRelay() const;
+        bool getState() const;
 
         // set methods
         void setHour(const uint hour);
@@ -38,6 +40,7 @@ class Alarm {
         void setSecond(const uint second);
         void setWeekdays(const std::array<bool, 7> weekdays);
         void setRelay(Relay* relay);
+        void setState(bool state);
 
         uint getNextAlarminSeconds(DateTime now) const; // This will return seconds from rtc now until this alarm will be executed
 

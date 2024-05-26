@@ -68,8 +68,8 @@ void Relay::Off() {
     digitalWrite(this->pin, HIGH);
 }
 
-Alarm* Relay::addAlarm(uint hour, uint minute, uint second, std::array<bool, 7> weekdays) {
-    Alarm* tempAlarm = new Alarm(hour, minute, second, weekdays, this);
+Alarm* Relay::addAlarm(uint hour, uint minute, uint second, std::array<bool, 7> weekdays, bool state) {
+    Alarm* tempAlarm = new Alarm(hour, minute, second, weekdays, this, state);
     this->alarms[tempAlarm->getId()] = tempAlarm;
 
     return tempAlarm;
@@ -119,6 +119,7 @@ String Relay::toJson() const {
             alarmDoc["weekdays"][i] = alarm->getWeekdays()[i];
         }
         alarmDoc["relay"] = alarm->getRelay()->getId();
+        alarmDoc["state"] = alarm->getState();
         alarmsArray.add(alarmDoc);
     }
 
