@@ -122,7 +122,7 @@ This API backend serves as the interface between the frontend interface for cont
       "systemTime": "14:30:00",
       "systemDate": "2024-05-13",
       "syncTime": true, // or false
-      "relayNames": [
+      "relays": [
         {
             "id": 1,
             "name": "New Relay 1"
@@ -141,7 +141,7 @@ This API backend serves as the interface between the frontend interface for cont
 - **Body**:
   ```json
   {
-      "message": "General settings updated successfully"
+      "message": "Settings updated successfully"
   }
   ```
 
