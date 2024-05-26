@@ -31,10 +31,10 @@ void handleGetAllRelays();     // - **Endpoint**: `/api/all-relays` GET
 void handleRelayControl();     // - **Endpoint**: `/api/relay-control` POST
 void handleSystemSettings();   // - **Endpoint**: `/api/settings` GET
 void handleUpdateSettings();   // - **Endpoint**: `/api/settings` POST
-void handleGetRelayAlarms();   // - **Endpoint**: `/api/relay-alarms?relayId=relayId` GET
+void handleGetRelayAlarms();   // - **Endpoint**: `/api/relay-alarms?relayId=:relayId` GET
 void handleCreateRelayAlarm(); // - **Endpoint**: `/api/relay-alarm` POST
-void handleUpdateRelayAlarm(); // - **Endpoint**: `/api/relay-alarm?relayId=relayId&alarmId=alarmId` PUT
-void handleDeleteRelayAlarm(); // - **Endpoint**: `/api/relay-alarm?relayId=relayId&alarmId=alarmId` DELETE
+void handleUpdateRelayAlarm(); // - **Endpoint**: `/api/relay-alarm?relayId=:relayId&alarmId=:alarmId` PUT
+void handleDeleteRelayAlarm(); // - **Endpoint**: `/api/relay-alarm?relayId=:relayId&alarmId=:alarmId` DELETE
 void handleNetworkInfo();      // - **Endpoint**: `/api/network-info` GET
 void handleServerTime();       // - **Endpoint**: `/api/server-time` GET
 void handleFirmwareUpdate();   // - **Endpoint**: `/api/update-firmware` POST
@@ -53,9 +53,6 @@ void setup()
     relayManager.addRelay(33, "Relay 2");
     relayManager.addRelay(25, "Relay 3");
     relayManager.addRelay(26, "Relay 4");
-
-
-
 
     // Initialize the SPIFFS
     if (!SPIFFS.begin(true))
@@ -78,7 +75,7 @@ void setup()
     server.on("/api/settings", HTTP_GET, handleSystemSettings);
     server.on("/api/settings", HTTP_POST, handleUpdateSettings);
     server.on("/api/relay-alarms", HTTP_GET, handleGetRelayAlarms);
-    // server.on("/api/relay-alarm", HTTP_POST, handleCreateRelayAlarm);
+    server.on("/api/relay-alarm", HTTP_POST, handleCreateRelayAlarm);
     // server.on("/api/relay-alarm", HTTP_PUT, handleUpdateRelayAlarm);
     // server.on("/api/relay-alarm", HTTP_DELETE, handleDeleteRelayAlarm);
     // server.on("/api/server-time", HTTP_GET, handleServerTime);
@@ -158,6 +155,60 @@ void sendJsonResponse(int status, const String &message)
     server.send(status, "application/json", message);
 }
 
+// Create JSON from string and validate required keys and their types
+String CreateJsonFromString(const String &body, const std::map<String, String> &requiredKeys, StaticJsonDocument<256> &doc)
+{
+    // Deserialize the JSON document
+    DeserializationError error = deserializeJson(doc, body);
+
+    // Check if deserialization was successful
+    if (error)
+    {
+        return "Failed to parse JSON";
+    }
+
+    // Validate required keys and their types
+    for (const auto &keyTypePair : requiredKeys)
+    {
+        const String &key = keyTypePair.first;
+        const String &type = keyTypePair.second;
+
+        if (!doc.containsKey(key))
+        {
+            return "Missing key: " + key;
+        }
+
+        if (type == "uint" && !doc[key].is<uint>())
+        {
+            return "Invalid type for key: " + key;
+        }
+        else if (type == "bool" && !doc[key].is<bool>())
+        {
+            return "Invalid type for key: " + key;
+        }
+        else if (type == "string" && !doc[key].is<String>())
+        {
+            return "Invalid type for key: " + key;
+        }
+        else if (type == "array_bool_7")
+        {
+            if (!doc[key].is<JsonArray>() || doc[key].size() != 7)
+            {
+                return "Invalid array size for key: " + key;
+            }
+            for (int i = 0; i < 7; i++)
+            {
+                if (!doc[key][i].is<bool>())
+                {
+                    return "Invalid array element type for key: " + key;
+                }
+            }
+        }
+    }
+
+    return "";
+}
+
 // - **Endpoint**: `/api/all-relays` GET
 void handleGetAllRelays()
 {
@@ -223,7 +274,7 @@ void handleRelayControl()
         Serial.println("State: " + String(state));
 
         // control relay
-        Relay* relay = relayManager.getRelayByID(relayId);
+        Relay *relay = relayManager.getRelayByID(relayId);
         if (relay != nullptr)
         {
             if (state)
@@ -269,9 +320,11 @@ void handleSystemSettings()
 
         // Format month and day with leading zeros
         String month = String(now.month());
-        if (month.length() == 1) month = "0" + month;
+        if (month.length() == 1)
+            month = "0" + month;
         String day = String(now.day());
-        if (day.length() == 1) day = "0" + day;
+        if (day.length() == 1)
+            day = "0" + day;
 
         doc["systemDate"] = String(now.year()) + "-" + month + "-" + day;
         doc["syncTime"] = syncTime;
@@ -337,7 +390,7 @@ void handleUpdateSettings()
         {
             uint id = relay["id"].as<uint>();
             String name = relay["name"].as<String>();
-            Relay* r = relayManager.getRelayByID(id);
+            Relay *r = relayManager.getRelayByID(id);
             if (r != nullptr)
             {
                 r->setName(name);
@@ -345,7 +398,7 @@ void handleUpdateSettings()
         }
 
         // update wifi settings
-        //TODO: IF wifi name & password != empty: Then Stop AP and try connecting to wifi. If it doesnt work then start AP again
+        // TODO: IF wifi name & password != empty: Then Stop AP and try connecting to wifi. If it doesnt work then start AP again
 
         // If syncTime is false, then set the time
         if (!syncTime)
@@ -359,13 +412,15 @@ void handleUpdateSettings()
             int second = systemTime.substring(6, 8).toInt();
 
             rtc.setDateTime(DateTime(year, month, day, hour, minute, second));
-        } else {
+        }
+        else
+        {
             // Sync time over NTP
             // TODO: Implement NTP sync
         }
 
         // Save data to NVS
-        ConfigManager& cm = ConfigManager::getInstance();
+        ConfigManager &cm = ConfigManager::getInstance();
         cm.setConfig("systemName", systemName);
         cm.setConfig("wifiName", wifiName);
         cm.setConfig("wifiPassword", wifiPassword);
@@ -385,33 +440,46 @@ void handleUpdateSettings()
 }
 
 // - **Endpoint**: `/api/relay-alarms?relayId=relayId` GET
-void handleGetRelayAlarms() {
-    try {
+void handleGetRelayAlarms()
+{
+    try
+    {
         // get relay id
         uint relayId = server.arg("relayId").toInt();
-        
+
         // get relay
-        Relay* relay = relayManager.getRelayByID(relayId);
-        if (relay != nullptr) {
+        Relay *relay = relayManager.getRelayByID(relayId);
+        if (relay != nullptr)
+        {
             JsonDocument doc;
             JsonArray alarmsArray = doc.createNestedArray("alarms");
 
             std::vector<uint> alarmIDs = relay->getAlarmIDs();
-            for (uint id : alarmIDs) {
-                Alarm* alarm = relay->getAlarmByID(id);
-                if (alarm != nullptr) {
-                    uint hour = alarm->getHour();
-                    uint minute = alarm->getMinute();
-                    uint second = alarm->getSecond();
+            for (uint id : alarmIDs)
+            {
+                Alarm *alarm = relay->getAlarmByID(id);
+                if (alarm != nullptr)
+                {
+                    String hour = String(alarm->getHour());
+                    String minute = String(alarm->getMinute());
+                    String second = String(alarm->getSecond());
+                    if (hour.length() == 1)
+                        hour = "0" + hour;
+                    if (minute.length() == 1)
+                        minute = "0" + minute;
+                    if (second.length() == 1)
+                        second = "0" + second;
+
                     std::array<bool, 7> weekdays = alarm->getWeekdays();
 
                     JsonDocument alarmDoc;
                     alarmDoc["id"] = id;
                     alarmDoc["state"] = alarm->getState();
-                    alarmDoc["time"] = String(hour) + ":" + String(minute) + ":" + String(second);
+                    alarmDoc["time"] = hour + ":" + minute + ":" + second;
                     alarmDoc.createNestedArray("weekdays");
                     JsonArray weekdaysArray = alarmDoc.createNestedArray("weekdays");
-                    for (int i = 0; i < 7; i++) {
+                    for (int i = 0; i < 7; i++)
+                    {
                         weekdaysArray.add(weekdays[i]);
                     }
 
@@ -422,10 +490,124 @@ void handleGetRelayAlarms() {
             String response;
             serializeJson(doc, response);
             sendJsonResponse(200, response);
-        } else {
+        }
+        else
+        {
             sendJsonResponse(404, "{ \"error\": \"Relay not found\"}");
         }
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception &e)
+    {
+        sendJsonResponse(500, "{ \"error\": \"" + String(e.what()) + "\"}");
+    }
+}
+
+// - **Endpoint**: `/api/relay-alarm` POST
+void handleCreateRelayAlarm()
+{
+    try
+    {
+        // Get body
+        String body = server.arg("plain");
+        Serial.println("Body: " + body);
+
+        // Define required keys and their types
+        std::map<String, String> requiredKeys = {
+            {"relayId", "uint"},
+            {"state", "bool"},
+            {"time", "string"},
+            {"weekdays", "array_bool_7"}};
+
+        // Allocate memory for the JsonDocument
+        StaticJsonDocument<256> doc; // Adjust size as needed
+
+        // Validate and create JSON document from string
+        String validationError = CreateJsonFromString(body, requiredKeys, doc);
+        if (validationError != "")
+        {
+            sendJsonResponse(400, "{ \"error\": \"" + validationError + "\"}");
+            return;
+        }
+
+        // Get relayId, state, time, and weekdays
+        uint relayId = doc["relayId"].as<uint>();
+        bool state = doc["state"].as<bool>();
+        String time = doc["time"].as<String>();
+        std::array<bool, 7> weekdays;
+        for (int i = 0; i < 7; i++)
+        {
+            weekdays[i] = doc["weekdays"][i].as<bool>();
+        }
+
+        // Get relay
+        Relay *relay = relayManager.getRelayByID(relayId);
+        if (relay == nullptr)
+        {
+            sendJsonResponse(404, "{ \"error\": \"Relay not found\"}");
+            return;
+        }
+
+        // Parse time
+        std::vector<String> timeParts;
+        String temp = "";
+        for (int i = 0; i < time.length(); i++)
+        {
+            if (i == time.length() - 1) {
+                temp += time[i];
+                timeParts.push_back(temp);
+                break;
+            }
+
+            if (time[i] == ':')
+            {
+                timeParts.push_back(temp);
+                temp = "";
+            }
+            else
+            {
+                temp += time[i];
+            }
+        }
+        if (timeParts.size() != 3)
+        {
+            sendJsonResponse(400, "{ \"error\": \"Invalid 'time' format\"}");
+            return;
+        }
+        // Convert time parts to integers and check if they are valid
+        uint hour;
+        uint minute;
+        uint second;
+        try
+        {
+            hour = timeParts[0].toInt();
+            minute = timeParts[1].toInt();
+            second = timeParts[2].toInt();
+            if (hour > 23 || minute > 59 || second > 59)
+            {
+                sendJsonResponse(400, "{ \"error\": \"Invalid time values\"}");
+                return;
+            }
+        }
+        catch (const std::exception &e)
+        {
+            sendJsonResponse(400, "{ \"error\": \"Invalid time values\"}");
+            return;
+        }
+
+        // Create alarm
+        Alarm *alarm = relay->addAlarm(hour, minute, second, weekdays, state);
+
+        // Create response
+        StaticJsonDocument<200> responseDoc;
+        responseDoc["message"] = "Relay alarm rule created successfully";
+        responseDoc["ruleId"] = alarm->getId();
+
+        String response;
+        serializeJson(responseDoc, response);
+        sendJsonResponse(200, response);
+    }
+    catch (const std::exception &e)
+    {
         sendJsonResponse(500, "{ \"error\": \"" + String(e.what()) + "\"}");
     }
 }
