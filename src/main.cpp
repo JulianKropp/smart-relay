@@ -1,5 +1,6 @@
 #include "rtc.h"
 #include "relayManager.h"
+#include "configManager.h"
 
 #include <WiFi.h>
 #include <WebServer.h>
@@ -7,12 +8,12 @@
 #include <ArduinoJson.h>
 
 // settings
-const char *systemName = "Smart Relays";
-const char *wifiName = "";
-const char *wifiPassword = "";
-const bool syncTime = false;
-const char *APssid = "ESP32-Access-Point";
-const char *APpassword = "12345678";
+String systemName = "Smart Relays";
+String wifiName = "";
+String wifiPassword = "";
+bool syncTime = false;
+String APssid = "ESP32-Access-Point";
+String APpassword = "12345678";
 
 // Create the WebServer (port 80)
 WebServer server(80);
@@ -75,7 +76,7 @@ void setup()
     server.on("/api/all-relays", HTTP_GET, handleGetAllRelays);
     server.on("/api/relay-control", HTTP_POST, handleRelayControl);
     server.on("/api/settings", HTTP_GET, handleSystemSettings);
-    // server.on("/api/settings", HTTP_POST, handleUpdateSettings);
+    server.on("/api/settings", HTTP_POST, handleUpdateSettings);
     // server.on("/api/relay-alarms", HTTP_GET, handleGetRelayAlarms);
     // server.on("/api/relay-alarm", HTTP_POST, handleCreateRelayAlarm);
     // server.on("/api/relay-alarm", HTTP_PUT, handleUpdateRelayAlarm);
@@ -294,6 +295,87 @@ void handleSystemSettings()
 
         String response;
         serializeJson(doc, response);
+        sendJsonResponse(200, response);
+    }
+    catch (const std::exception &e)
+    {
+        sendJsonResponse(500, "{ \"error\": \"" + String(e.what()) + "\"}");
+    }
+}
+
+// - **Endpoint**: `/api/settings` POST
+void handleUpdateSettings()
+{
+    try
+    {
+        // get body
+        String body = server.arg("plain");
+        Serial.println("Body: " + body);
+
+        // Allocate memory for the JsonDocument
+        StaticJsonDocument<200> doc; // Adjust size as needed
+
+        // Deserialize the JSON document
+        DeserializationError error = deserializeJson(doc, body);
+
+        // Check if deserialization was successful
+        if (error)
+        {
+            sendJsonResponse(400, "{ \"error\": \"Failed to parse JSON\"}");
+            return;
+        }
+
+        systemName = doc["systemName"].as<String>();
+        wifiName = doc["wifiName"].as<String>();
+        wifiPassword = doc["wifiPassword"].as<String>();
+        String systemTime = doc["systemTime"].as<String>();
+        String systemDate = doc["systemDate"].as<String>();
+        syncTime = doc["syncTime"].as<bool>();
+
+        // update relays
+        for (auto relay : doc["relays"].as<JsonArray>())
+        {
+            uint id = relay["id"].as<uint>();
+            String name = relay["name"].as<String>();
+            Relay* r = relayManager.getRelayByID(id);
+            if (r != nullptr)
+            {
+                r->setName(name);
+            }
+        }
+
+        // update wifi settings
+        //TODO: IF wifi name & password != empty: Then Stop AP and try connecting to wifi. If it doesnt work then start AP again
+
+        // If syncTime is false, then set the time
+        if (!syncTime)
+        {
+            // Set the time
+            int year = systemDate.substring(0, 4).toInt();
+            int month = systemDate.substring(5, 7).toInt();
+            int day = systemDate.substring(8, 10).toInt();
+            int hour = systemTime.substring(0, 2).toInt();
+            int minute = systemTime.substring(3, 5).toInt();
+            int second = systemTime.substring(6, 8).toInt();
+
+            rtc.setDateTime(DateTime(year, month, day, hour, minute, second));
+        } else {
+            // Sync time over NTP
+            // TODO: Implement NTP sync
+        }
+
+        // Save data to NVS
+        ConfigManager& cm = ConfigManager::getInstance();
+        cm.setConfig("systemName", systemName);
+        cm.setConfig("wifiName", wifiName);
+        cm.setConfig("wifiPassword", wifiPassword);
+        cm.setConfig("syncTime", String(syncTime));
+
+        StaticJsonDocument<200> responseDoc;
+        responseDoc["message"] = "Settings updated successfully";
+
+        String response;
+        serializeJson(responseDoc, response);
         sendJsonResponse(200, response);
     }
     catch (const std::exception &e)
