@@ -266,6 +266,7 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(response => response.json())
         .then(data => {
             document.getElementById("system-name").value = data.systemName;
+            document.getElementById("title").textContent = data.systemName;
 
             const relayNamesDiv = document.getElementById('relay-names');
             if (!relayNamesDiv) {
@@ -289,8 +290,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Save settings
     function saveGeneralSettings() {
+        let systemName = document.getElementById("system-name").value;
+
+        // Change title of the page
+        document.getElementById("title").textContent = systemName;
+
         const settings = {
-            systemName: document.getElementById("system-name").value,
+            systemName: systemName,
             relays: []
         };
 
@@ -300,6 +306,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 id: relay.id,
                 name: nameInput.value
             });
+
+            document.getElementById(`relay-${relay.id}-rules-heading`).textContent = "Rules: " + nameInput.value;
         });
 
         fetch("/api/settings", {

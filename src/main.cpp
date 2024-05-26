@@ -250,6 +250,7 @@ void handleGetAllRelays()
     try
     {
         StaticJsonDocument<500> doc; // Adjust size as needed
+        doc["systemName"] = systemName;
         JsonArray relaysArray = doc.createNestedArray("relays");
         std::vector<uint> relayIDs = relayManager.getRelayIDs();
         for (uint id : relayIDs)

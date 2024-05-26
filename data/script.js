@@ -19,6 +19,9 @@ document.addEventListener("DOMContentLoaded", function () {
             relayList.innerHTML = "";
         }
 
+        document.getElementById("title").textContent = data.systemName;
+        document.title = data.systemName;
+
         let relays = data.relays;
 
         if (!relays || relays.length === 0) {
