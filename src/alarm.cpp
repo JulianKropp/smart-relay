@@ -20,7 +20,15 @@ Alarm::Alarm(String json, Relay *relay)
         return;
     }
 
-    id = doc["id"];
+    uint id = doc["id"].as<uint>();
+    if (id < idCounter)
+    {
+        id = idCounter++;
+    } else {
+        idCounter = id + 1;
+    }
+
+    id = id;
     hour = doc["hour"];
     minute = doc["minute"];
     second = doc["second"];

@@ -17,7 +17,15 @@ Relay::Relay(String json) {
     DynamicJsonDocument doc(1024);
     deserializeJson(doc, json);
 
-    this->id = doc["id"];
+    uint id = doc["id"].as<uint>();
+    if (id < idCounter)
+    {
+        id = idCounter++;
+    } else {
+        idCounter = id + 1;
+    }
+
+    this->id = id;
     this->name = doc["name"].as<String>();
     this->pin = doc["pin"];
 
