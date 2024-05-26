@@ -739,3 +739,46 @@ void handleUpdateRelayAlarm()
         sendJsonResponse(500, "{ \"error\": \"" + String(e.what()) + "\"}");
     }
 }
+
+// - **Endpoint**: `/api/relay-alarm?relayId=:relayId&alarmId=:alarmId` DELETE
+void handleDeleteRelayAlarm()
+{
+    try
+    {
+        // Get relayId, alarmId
+        uint relayId = server.arg("relayId").toInt();
+        uint alarmId = server.arg("alarmId").toInt();
+
+        // Get relay
+        Relay *relay = relayManager.getRelayByID(relayId);
+        if (relay == nullptr)
+        {
+            sendJsonResponse(404, "{ \"error\": \"Relay not found\"}");
+            return;
+        }
+
+        // Get alarm
+        Alarm *alarm = relay->getAlarmByID(alarmId);
+        if (alarm == nullptr)
+        {
+            sendJsonResponse(404, "{ \"error\": \"Alarm not found\"}");
+            return;
+        }
+
+        // Delete alarm
+        relay->removeAlarm(alarmId);
+
+        // Create response
+        StaticJsonDocument<200> responseDoc;
+        responseDoc["message"] = "Relay alarm rule deleted successfully";
+
+        String response;
+        serializeJson(responseDoc, response);
+        sendJsonResponse(200, response);
+    }
+    catch (const std::exception &e)
+    {
+        sendJsonResponse(500, "{ \"error\": \"" + String(e.what()) + "\"}");
+    }
+}
+
