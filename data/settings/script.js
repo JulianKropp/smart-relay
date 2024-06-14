@@ -54,8 +54,14 @@ document.addEventListener("DOMContentLoaded", function () {
         const select = ruleDiv.querySelector('.select-style');
         select.value = ruleData.state ? "on" : "off"; // Correctly set the state
 
-        const timeInput = ruleDiv.querySelector('.time-input');
-        timeInput.value = ruleData.time;
+        // Time
+        const hourInput = ruleDiv.querySelector(`#relay-${relayId}-time-${ruleIndex}-hour`);
+        hourInput.value = ruleData.hour; // corrected typo from 'hout' to 'hour'
+        const minuteInput = ruleDiv.querySelector(`#relay-${relayId}-time-${ruleIndex}-minute`);
+        minuteInput.value = ruleData.minute;
+        const secondInput = ruleDiv.querySelector(`#relay-${relayId}-time-${ruleIndex}-second`);
+        secondInput.value = ruleData.second;
+
 
         const days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
         const daysChecked = {
@@ -98,7 +104,9 @@ document.addEventListener("DOMContentLoaded", function () {
     function handleAddButtonClick(relayId) {
         // Get state, time, and days values
         let state = document.getElementById(`relay-${relayId}-select-new`).value === "on" ? true : false;
-        let time = document.getElementById(`relay-${relayId}-time-new`).value;
+        let hour = parseInt(document.getElementById(`relay-${relayId}-time-new-hour`).value, 10);
+        let minute = parseInt(document.getElementById(`relay-${relayId}-time-new-minute`).value, 10);
+        let second = parseInt(document.getElementById(`relay-${relayId}-time-new-second`).value, 10);
         let weekdays = [false, false, false, false, false, false, false];
         let checkboxes = document.getElementById(`relay-${relayId}-weekdays-new`).querySelectorAll('input[type="checkbox"]');
         const daysChecked = {
@@ -126,7 +134,9 @@ document.addEventListener("DOMContentLoaded", function () {
             body: JSON.stringify({
                 relayId: relayId,
                 state: state,
-                time: time,
+                hour: hour,
+                minute: minute,
+                second: second,
                 weekdays: weekdays
             })
         })
@@ -190,44 +200,46 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!relayDiv) {
             relayDiv = document.getElementById(`relay-${relay.id}-form`);
         }
-    
+
         if (!relayDiv) {
             console.error(`relay-${relay.id}-form not found`);
             return;
         }
-    
+
         fetch(`/api/relay-alarms?relayId=${relay.id}`)
             .then(response => response.json())
             .then(alarmRulesob => {
                 let alarmRules = alarmRulesob.alarms;
-    
+
                 // Clear existing rules before updating
                 while (relayDiv.firstChild) {
                     relayDiv.removeChild(relayDiv.firstChild);
                 }
-    
+
                 const rulesHeading = document.createElement('h3');
                 rulesHeading.id = `relay-${relay.id}-rules-heading`;
                 rulesHeading.textContent = `Rules: ${relay.name}`;
                 relayDiv.appendChild(rulesHeading);
-    
+
                 alarmRules.forEach((rule) => {
                     const ruleId = rule.id;
                     let ruleElement = createRuleElement(relay.id, rule, ruleId, "delete");
                     relayDiv.appendChild(ruleElement);
-    
+
                     // Attach event listeners properly
                     document.getElementById(`relay-${relay.id}-select-${ruleId}`).addEventListener('change', () => updateRelayRule(relay.id, ruleId));
-                    document.getElementById(`relay-${relay.id}-time-${ruleId}`).addEventListener('input', () => updateRelayRule(relay.id, ruleId));
-                    
+                    document.getElementById(`relay-${relay.id}-time-${ruleId}-hour`).addEventListener('input', () => updateRelayRule(relay.id, ruleId));
+                    document.getElementById(`relay-${relay.id}-time-${ruleId}-minute`).addEventListener('input', () => updateRelayRule(relay.id, ruleId));
+                    document.getElementById(`relay-${relay.id}-time-${ruleId}-second`).addEventListener('input', () => updateRelayRule(relay.id, ruleId));
+
                     const days = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
                     days.forEach(day => {
                         document.getElementById(`relay-${relay.id}-${day}-${ruleId}`).addEventListener('change', () => updateRelayRule(relay.id, ruleId));
                     });
                 });
-    
+
                 // Ensure the "Add" button is always at the bottom
-                const newRuleElement = createRuleElement(relay.id, { state: true, time: '00:00:00', weekdays: [false, false, false, false, false, false, false] }, alarmRules.length + 1, "add");
+                const newRuleElement = createRuleElement(relay.id, { state: true, hour: 0, minute: 0, second: 0, weekdays: [false, false, false, false, false, false, false] }, alarmRules.length + 1, "add");
                 relayDiv.appendChild(newRuleElement);
             });
     }
@@ -235,15 +247,19 @@ document.addEventListener("DOMContentLoaded", function () {
     function updateRelayRule(relayID, ruleID) {
         // /api/relay-alarm?relayId=0&ruleId=0 PUT
         let rs = document.getElementById(`relay-${relayID}-select-${ruleID}`);
-        let ti = document.getElementById(`relay-${relayID}-time-${ruleID}`);
+        let tih = document.getElementById(`relay-${relayID}-time-${ruleID}-hour`);
+        let tim = document.getElementById(`relay-${relayID}-time-${ruleID}-minute`);
+        let tis = document.getElementById(`relay-${relayID}-time-${ruleID}-second`);
         let ch = document.getElementById(`relay-${relayID}-weekdays-${ruleID}`);
 
-        if (!rs || !ti || !ch) {
+        if (!rs || !tih || !tim || !tis || !ch) {
             return;
         }
 
         let state = rs.value === "on" ? true : false;
-        let time = ti.value;
+        let hour = parseInt(tih.value, 10);
+        let minute = parseInt(tim.value, 10);
+        let second = parseInt(tis.value, 10);
         let weekdays = [false, false, false, false, false, false, false];
         let checkboxes = ch.querySelectorAll('input[type="checkbox"]');
 
@@ -270,7 +286,9 @@ document.addEventListener("DOMContentLoaded", function () {
             },
             body: JSON.stringify({
                 state: state,
-                time: time,
+                hour: hour,
+                minute: minute,
+                second: second,
                 weekdays: weekdays
             })
         })
@@ -387,25 +405,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 console.error("Failed to save settings.");
             });
     }
-
-    // Upload a file when the upload button is clicked
-    document.getElementById("update-button").addEventListener("click", function () {
-        const fileInput = document.getElementById("update-file");
-        const formData = new FormData();
-        formData.append("firmware", fileInput.files[0]);
-
-        fetch("/api/update-firmware", {
-            method: "POST",
-            body: formData
-        })
-            .then(response => response.json())
-            .then(data => {
-                alert(data.message);
-            })
-            .catch(error => {
-                alert("Failed to update firmware.");
-            });
-    });
 
     // Fetch and load the HTML template, then fetch relays and update the relay-alarm-rules section
     loadTemplate()

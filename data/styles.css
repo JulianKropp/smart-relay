@@ -1,430 +1,440 @@
 .relay-list {
-    width: 100%;
-    max-width: 500px;
-    margin: 20px auto;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    background-color: white;
-    border-radius: 10px;
+  width: 100%;
+  max-width: 500px;
+  margin: 20px auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background-color: white;
+  border-radius: 10px;
 }
 
 .relay-control {
-    width: 90%;
-    max-width: 500px;
-    margin: 20px auto;
-    text-align: center;
-    padding: 20px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    background-color: white;
-    border-radius: 10px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  width: 90%;
+  max-width: 500px;
+  margin: 20px auto;
+  text-align: center;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background-color: white;
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .switch {
-    position: relative;
-    display: inline-block;
-    width: 100px;
-    height: 56px;
-    margin-right: 20px;
+  position: relative;
+  display: inline-block;
+  width: 100px;
+  height: 56px;
+  margin-right: 20px;
 }
 
 .relay-checkbox {
-    opacity: 0;
-    width: 0;
-    height: 0;
+  opacity: 0;
+  width: 0;
+  height: 0;
 }
 
 .toggle-label {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #ccc;
-    transition: .4s;
-    border-radius: 56px;
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 56px;
 }
 
 .toggle-label:before {
-    position: absolute;
-    content: "";
-    height: 48px;
-    width: 48px;
-    left: 4px;
-    bottom: 4px;
-    background-color: white;
-    transition: .4s;
-    border-radius: 50%;
+  position: absolute;
+  content: "";
+  height: 48px;
+  width: 48px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
 }
 
-.relay-checkbox:checked+.toggle-label {
-    background-color: #4CAF50;
+.relay-checkbox:checked + .toggle-label {
+  background-color: #4caf50;
 }
 
-.relay-checkbox:checked+.toggle-label:before {
-    transform: translateX(44px);
+.relay-checkbox:checked + .toggle-label:before {
+  transform: translateX(44px);
 }
 
-.relay-checkbox:focus+.toggle-label {
-    box-shadow: 0 0 1px #2196F3;
+.relay-checkbox:focus + .toggle-label {
+  box-shadow: 0 0 1px #2196f3;
 }
 
 .settings-button {
-    background-color: #0056b3;
-    color: white;
-    padding: 10px 20px;
-    text-decoration: none;
-    font-size: 16px;
-    border-radius: 5px;
-    white-space: nowrap;
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  background-color: #0056b3;
+  color: white;
+  padding: 10px 20px;
+  text-decoration: none;
+  font-size: 16px;
+  border-radius: 5px;
+  white-space: nowrap;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .settings-button:hover {
-    background-color: #003975;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  background-color: #003975;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background-color: #f0f0f0;
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #f0f0f0;
 }
 
 .header {
-    background-color: #007BFF;
-    color: white;
-    width: 100%;
-    padding: 10px;
-    text-align: center;
+  background-color: #007bff;
+  color: white;
+  width: 100%;
+  padding: 10px;
+  text-align: center;
 }
 
 .settings-form {
-    width: 90%;
-    max-width: 600px;
-    margin: 20px auto;
-    background-color: white;
-    padding: 20px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    border-radius: 10px;
+  width: 90%;
+  max-width: 600px;
+  margin: 20px auto;
+  background-color: white;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
 }
 
 .settings-form h2,
 .settings-form h3 {
-    text-align: center;
+  text-align: center;
 }
 
 .settings-form label {
-    margin-top: 10px;
-    display: block;
-    font-weight: bold;
+  margin-top: 10px;
+  display: block;
+  font-weight: bold;
 }
 
 .settings-form input[type="text"],
 .settings-form input[type="date"] {
-    width: 100%;
-    padding: 8px;
-    display: inline-block;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
+  width: 100%;
+  padding: 8px;
+  display: inline-block;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
 }
 
 .time-date-container {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    /* Abstand zwischen Zeit- und Datumsfeldern */
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  /* Abstand zwischen Zeit- und Datumsfeldern */
 }
 
 .time-container,
 .date-container {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .time-inputs {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 .time-adjust {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 5px;
 }
 
 .time-adjust button {
-    background-color: #007BFF;
-    color: white;
-    border: none;
-    padding: 5px;
-    margin: 2px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 5px;
+  margin: 2px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .time-adjust button:hover {
-    background-color: #0056b3;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  background-color: #0056b3;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .time-adjust input {
-    width: 50px;
-    text-align: center;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    margin: 2px;
-    padding: 5px;
+  width: 50px;
+  text-align: center;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin: 2px;
+  padding: 5px;
 }
 
 .add-rule,
 .delete-rule {
-    background-color: #f44336;
-    /* Red */
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    text-decoration: none;
-    font-size: 16px;
-    margin: 5px;
-    cursor: pointer;
-    border-radius: 5px;
+  background-color: #f44336;
+  /* Red */
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  text-decoration: none;
+  font-size: 16px;
+  margin: 5px;
+  cursor: pointer;
+  border-radius: 5px;
 }
 
 .confirm-cancel-buttons {
-    display: flex;
-    gap: 10px;
+  display: flex;
+  gap: 10px;
 }
 
 /* General button styles for consistency */
 button {
-    padding: 10px 20px;
-    border: none;
-    cursor: pointer;
-    border-radius: 5px;
-    font-size: 16px;
-    color: white;
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  padding: 10px 20px;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 16px;
+  color: white;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .confirm-cancel-buttons button {
-    padding: 5px 10px;
-    cursor: pointer;
+  padding: 5px 10px;
+  cursor: pointer;
 }
 
 button.confirm-delete {
-    background-color: red;
-    color: white;
+  background-color: red;
+  color: white;
 }
 
 button.cancel-delete {
-    background-color: gray;
-    color: white;
+  background-color: gray;
+  color: white;
 }
 
 .add-rule {
-    background-color: #4CAF50;
-    /* Green */
+  background-color: #4caf50;
+  /* Green */
 }
 
 .add-rule:hover,
 .delete-rule:hover {
-    opacity: 0.8;
+  opacity: 0.8;
 }
 
 .rule {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-    background-color: #f0f0f0;
-    margin-bottom: 5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background-color: #f0f0f0;
+  margin-bottom: 5px;
 }
 
 .rule-detail {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .input-group {
-    display: flex;
-    align-items: center;
-    /* Ensure vertical alignment */
-    justify-content: space-between;
-    width: 100%;
+  display: flex;
+  align-items: center;
+  /* Ensure vertical alignment */
+  justify-content: space-between;
+  width: 100%;
 }
 
 .select-style,
 .time-input {
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    background-color: white;
-    font-family: Arial, sans-serif;
-    font-size: 16px;
-    box-sizing: border-box;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: white;
+  font-family: Arial, sans-serif;
+  font-size: 16px;
+  box-sizing: border-box;
 }
 
 .select-style {
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    height: 38px;
-    width: 49%;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  height: 38px;
+  width: 49%;
 }
 
 .time-input {
-    margin-left: 2%;
-    width: 49%;
+  margin-left: 2%;
+  width: 49%;
+}
+
+.input-font {
+  text-align: center;
 }
 
 .weekdays {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
 }
 
 .settings-form p {
-    background-color: #f8f8f8;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+  background-color: #f8f8f8;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
 }
 
 .submit-button {
-    background-color: #4CAF50;
-    /* Green */
-    color: white;
-    padding: 14px 20px;
-    margin: 10px 0;
-    border: none;
-    cursor: pointer;
-    width: 100%;
-    border-radius: 5px;
-    font-size: 16px;
+  background-color: #4caf50;
+  /* Green */
+  color: white;
+  padding: 14px 20px;
+  margin: 10px 0;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  border-radius: 5px;
+  font-size: 16px;
 }
 
 .submit-button:hover {
-    background-color: #45a049;
+  background-color: #45a049;
 }
 
 .back-button {
-    display: inline-flex;
-    align-items: center;
-    background-color: #0056b3;
-    color: #fff;
-    text-decoration: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    font-size: 16px;
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  background-color: #0056b3;
+  color: #fff;
+  text-decoration: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-size: 16px;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .back-button:hover {
-    background-color: #003975;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  background-color: #003975;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .back-button:before {
-    content: '←';
-    margin-right: 10px;
-    font-size: 18px;
+  content: "←";
+  margin-right: 10px;
+  font-size: 18px;
 }
 
 #sync-time {
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
 }
 
+.dot {
+  font-weight: bold;
+  padding-left: 5px;
+  animation-name: animation_blink;
+  animation-timing-function: ease-in;
+  animation-duration: 2s;
+  animation-iteration-count: infinite;
+}
 
+@keyframes animation_blink {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.1;
+  }
+  100% {
+    opacity: 1;
+  }
+}
 
 /* Layout adjustments for mobile view */
 @media (max-width: 600px) {
-    .rule {
-        flex-direction: column;
-        align-items: flex-start;
-    }
+  .rule {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 
-    .rule-detail {
-        width: 100%;
-    }
+  .rule-detail {
+    width: 100%;
+  }
 
-    .input-group {
-        flex-direction: column;
-        width: 100%;
-    }
+  .input-group {
+    flex-direction: column;
+    width: 100%;
+  }
 
-    .select-style,
-    .time-input {
-        width: 100%;
-        margin: 5px 0;
-    }
+  .select-style,
+  .time-input {
+    width: 100%;
+    margin: 5px 0;
+  }
 
-    .weekdays {
-        justify-content: flex-start;
-        flex-wrap: wrap;
-        gap: 5px;
-    }
+  .weekdays {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 5%;
+  }
 
-    .confirm-cancel-buttons {
-        flex-direction: column;
-        width: 100%;
-    }
+  .confirm-cancel-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
 
-    .confirm-cancel-buttons button {
-        width: 100%;
-        margin: 5px 0;
-    }
+  .confirm-cancel-buttons button {
+    width: 100%;
+    margin: 5px 0;
+  }
 
-    .time-date-container {
-        flex-direction: column;
-    }
+  .time-date-container {
+    flex-direction: column;
+  }
 
-    .time-adjust {
-        flex-direction: row;
-        justify-content: center;
-    }
+  .time-adjust {
+    flex-direction: row;
+    justify-content: center;
+  }
 
-    .time-adjust input {
-        margin: 0 5px;
-    }
+  .time-adjust input {
+    margin: 0 5px;
+  }
 
-    .time-inputs {
-        flex-direction: column;
-    }
+  .time-inputs {
+    flex-direction: column;
+  }
+
+  .dot {
+    display: none;
+  }
 }

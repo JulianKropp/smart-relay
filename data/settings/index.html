@@ -1,70 +1,69 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>General Settings</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
 
-<body>
+  <body>
     <div id="header" class="header">
-        <h1 id="title">Smart Relays</h1>
-        <a href="/" id="back-button" class="back-button">Back</a>
+      <h1 id="title">Smart Relays</h1>
+      <a href="/" id="back-button" class="back-button">Back</a>
     </div>
 
     <div id="relay-alarm-rules" class="settings-form">
-        <h2 id="relay-heading">Alarm rules</h2>
-        <!--rart.html will be inserted here-->
+      <h2 id="relay-heading">Alarm rules</h2>
+      <!--rart.html will be inserted here-->
     </div>
 
     <div id="general-settings" class="settings-form">
-        <h2 id="general-settings-heading">General Settings</h2>
-        <label for="system-name">Name:</label>
-        <input type="text" id="system-name" name="systemName" value="Smart Relays">
+      <h2 id="general-settings-heading">General Settings</h2>
+      <label for="system-name">Name:</label>
+      <input
+        type="text"
+        id="system-name"
+        name="systemName"
+        value="Smart Relays"
+      />
 
-        <div id="time-date" class="time-date-container">
-            <div id="time" class="time-container">
-                <label for="system-time">Time:</label>
-                <div class="time-inputs">
-                    <div id="time-hour" class="time-adjust">
-                        <button onclick="adjustTime('hour', 1)">+</button>
-                        <p id="system-time-hour" name="systemTime">0</p>
-                        <button onclick="adjustTime('hour', -1)">-</button>
-                    </div>
-                    <div id="time-minute" class="time-adjust">
-                        <button onclick="adjustTime('minute', 1)">+</button>
-                        <p id="system-time-minute" name="systemTime">0</p>
-                        <button onclick="adjustTime('minute', -1)">-</button>
-                    </div>
-                    <div id="time-second" class="time-adjust">
-                        <button onclick="adjustTime('second', 1)">+</button>
-                        <p id="system-time-second" name="systemTime">0</p>
-                        <button onclick="adjustTime('second', -1)">-</button>
-                    </div>
-                </div>
+      <div id="time-date" class="time-date-container">
+        <div id="time" class="time-container">
+          <label for="system-time">Time:</label>
+          <div class="time-inputs">
+            <div id="time-hour" class="time-adjust">
+              <button onclick="adjustTime('hour', 1)">+</button>
+              <p id="system-time-hour" name="systemTime">0</p>
+              <button onclick="adjustTime('hour', -1)">-</button>
             </div>
-            <div id="date" class="date-container">
-                <label for="system-date">Date:</label>
-                <input type="date" id="system-date" name="systemDate" value="2024-07-23">
+            <div id="time-minute" class="time-adjust">
+              <button onclick="adjustTime('minute', 1)">+</button>
+              <p id="system-time-minute" name="systemTime">0</p>
+              <button onclick="adjustTime('minute', -1)">-</button>
             </div>
+            <div id="time-second" class="time-adjust">
+              <button onclick="adjustTime('second', 1)">+</button>
+              <p id="system-time-second" name="systemTime">0</p>
+              <button onclick="adjustTime('second', -1)">-</button>
+            </div>
+          </div>
         </div>
-        <div id="relay-names">
-            <h3 id="relay-names-heading">Relay Names</h3>
+        <div id="date" class="date-container">
+          <label for="system-date">Date:</label>
+          <input
+            type="date"
+            id="system-date"
+            name="systemDate"
+            value="2024-07-23"
+          />
         </div>
-
-
+      </div>
+      <div id="relay-names">
+        <h3 id="relay-names-heading">Relay Names</h3>
+      </div>
     </div>
 
-    <div id="update-form" class="settings-form">
-        <div id="update">
-            <h3 id="update-heading">Update</h3>
-            <input type="file" id="update-file" name="file" accept=".bin, .spiffs, .littlefs">
-            <button type="submit" id="update-button" class="submit-button">Update</button>
-        </div>
-    </div>
     <script src="/settings/script.js"></script>
-</body>
-
+  </body>
 </html>

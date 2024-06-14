@@ -2,17 +2,21 @@
     <div class="rule" id="relay-${relayId}-rule-${ruleIndex}">
         <div class="rule-detail" id="relay-${relayId}-rule-${ruleIndex}-detail">
             <div class="input-group" id="relay-${relayId}-input-group-${ruleIndex}">
-                <select class="select-style" id="relay-${relayId}-select-${ruleIndex}">
+                <select class="select-style input-font" id="relay-${relayId}-select-${ruleIndex}">
                     <option value="on">ON</option>
                     <option value="off">OFF</option>
                 </select>
-                <input type="time" class="time-input" id="relay-${relayId}-time-${ruleIndex}" name="ruleTime${ruleIndex}">
+                <input type="number" class="time-input input-font" id="relay-${relayId}-time-${ruleIndex}-hour" name="ruleTime${ruleIndex}Hour" max="23" min="0" placeholder="hh">
+                <span class="dot">:</span>
+                <input type="number" class="time-input input-font" id="relay-${relayId}-time-${ruleIndex}-minute" name="ruleTime${ruleIndex}Minutes" max="59" min="0" placeholder="mm">
+                <span class="dot">:</span>
+                <input type="number" class="time-input input-font" id="relay-${relayId}-time-${ruleIndex}-second" name="ruleTime${ruleIndex}Seconds" max="59" min="0" placeholder="ss">
             </div>
             <div class="weekdays" id="relay-${relayId}-weekdays-${ruleIndex}">
                 <input type="checkbox" value="mon" id="relay-${relayId}-mon-${ruleIndex}"><label for="relay-${relayId}-mon-${ruleIndex}">Mon</label>
                 <input type="checkbox" value="tue" id="relay-${relayId}-tue-${ruleIndex}"><label for="relay-${relayId}-tue-${ruleIndex}">Tue</label>
                 <input type="checkbox" value="wed" id="relay-${relayId}-wed-${ruleIndex}"><label for="relay-${relayId}-wed-${ruleIndex}">Wed</label>
-                <input type="checkbox" value="thu" id="relay-${relayId}-thu-${ruleIndex}"><label for="relay-${relayId}-thu-${ruleIndex}">Thu</label>
+                <input type="checkbox" value="thu" id="relay-${relayId}-thu-${ruleIndex}"><label for="relay-${relayD}-thu-${ruleIndex}">Thu</label>
                 <input type="checkbox" value="fri" id="relay-${relayId}-fri-${ruleIndex}"><label for="relay-${relayId}-fri-${ruleIndex}">Fri</label>
                 <input type="checkbox" value="sat" id="relay-${relayId}-sat-${ruleIndex}"><label for="relay-${relayId}-sat-${ruleIndex}">Sat</label>
                 <input type="checkbox" value="sun" id="relay-${relayId}-sun-${ruleIndex}"><label for="relay-${relayId}-sun-${ruleIndex}">Sun</label>
