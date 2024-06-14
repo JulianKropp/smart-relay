@@ -164,13 +164,17 @@ This API backend serves as the interface between the frontend interface for cont
       {
           "id": 1,
           "state": true,
-          "time": "06:00:00",
+          "hour": 6,
+          "minute": 0,
+          "second": 0,
           "weekdays": [true, false, true, false, true, false, true] // [sun, mon, tue, wed, thu, fri, sat]
       },
       {
           "id": 2,
           "state": false,
-          "time": "22:00:00",
+          "hour": 22,
+          "minute": 0,
+          "second": 0,
           "weekdays": [true, false, true, false, true, false, true] // [sun, mon, tue, wed, thu, fri, sat]
       }
   ]
@@ -197,7 +201,9 @@ This API backend serves as the interface between the frontend interface for cont
   {
       "relayId": 1,
       "state": true, // or false
-      "time": "06:00:00",
+      "hour": 6,
+      "minute": 0,
+      "second": 0,
       "weekdays": [true, false, true, false, true, false, true] // [sun, mon, tue, wed, thu, fri, sat
   }
   ```
@@ -241,7 +247,9 @@ This API backend serves as the interface between the frontend interface for cont
   ```json
   {
       "state": false, // or true
-      "time": "22:00:00",
+      "hour": 22,
+      "minute": 0,
+      "second": 0,
       "weekdays": [true, false, true, false, true, false, true] // [sun, mon, tue, wed, thu, fri, sat
   }
   ```

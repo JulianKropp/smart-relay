@@ -543,7 +543,9 @@ void handleGetRelayAlarms()
                         minute = "0" + minute;
                     if (second.length() == 1)
                         second = "0" + second;
-                    alarmDoc["time"] = hour + ":" + minute + ":" + second;
+                    alarmDoc["hour"] = hour;
+                    alarmDoc["minute"] = minute;
+                    alarmDoc["second"] = second;
 
                     JsonArray weekdaysArray = alarmDoc.createNestedArray("weekdays");
                     std::array<bool, 7> weekdays = alarm->getWeekdays();
@@ -580,7 +582,9 @@ void handleCreateRelayAlarm()
         std::map<String, String> requiredKeys = {
             {"relayId", "uint"},
             {"state", "bool"},
-            {"time", "string"},
+            {"hour", "uint"},
+            {"minute", "uint"},
+            {"second", "uint"},
             {"weekdays", "array_bool_7"}};
 
         // Allocate memory for the JsonDocument
@@ -597,7 +601,9 @@ void handleCreateRelayAlarm()
         // Get relayId, state, time, and weekdays
         uint relayId = doc["relayId"].as<uint>();
         bool state = doc["state"].as<bool>();
-        String time = doc["time"].as<String>();
+        uint hour = doc["hour"].as<uint>();
+        uint minute = doc["minute"].as<uint>();
+        uint second = doc["second"].as<uint>();
         std::array<bool, 7> weekdays;
         for (int i = 0; i < 7; i++)
         {
@@ -613,9 +619,6 @@ void handleCreateRelayAlarm()
         }
 
         // Parse time
-        int hour = time.substring(0, 2).toInt();
-        int minute = time.substring(3, 5).toInt();
-        int second = time.substring(6, 8).toInt();
         if (hour > 23 || minute > 59 || second > 59)
         {
             sendJsonResponse(400, "{ \"error\": \"Invalid time values\"}");
@@ -654,7 +657,9 @@ void handleUpdateRelayAlarm()
         // Define required keys and their types
         std::map<String, String> requiredKeys = {
             {"state", "bool"},
-            {"time", "string"},
+            {"hour", "uint"},
+            {"minute", "uint"},
+            {"second", "uint"},
             {"weekdays", "array_bool_7"}};
 
         // Allocate memory for the JsonDocument
@@ -690,45 +695,16 @@ void handleUpdateRelayAlarm()
 
         // Get state, time and weekdays
         bool state = doc["state"].as<bool>();
-        String time = doc["time"].as<String>();
+        uint hour = doc["hour"].as<uint>();
+        uint minute = doc["minute"].as<uint>();
+        uint second = doc["second"].as<uint>();
         std::array<bool, 7> weekdays;
         for (int i = 0; i < 7; i++)
         {
             weekdays[i] = doc["weekdays"][i].as<bool>();
         }
 
-        // Parse time
-        std::vector<String> timeParts;
-        String temp = "";
-        for (int i = 0; i < time.length(); i++)
-        {
-            if (i == time.length() - 1)
-            {
-                temp += time[i];
-                timeParts.push_back(temp);
-                break;
-            }
-
-            if (time[i] == ':')
-            {
-                timeParts.push_back(temp);
-                temp = "";
-            }
-            else
-            {
-                temp += time[i];
-            }
-        }
-
-        if (timeParts.size() != 3)
-        {
-            sendJsonResponse(400, "{ \"error\": \"Invalid 'time' format\"}");
-            return;
-        }
-
-        uint hour = timeParts[0].toInt();
-        uint minute = timeParts[1].toInt();
-        uint second = timeParts[2].toInt();
+        // Validate time
         if (hour > 23 || minute > 59 || second > 59)
         {
             sendJsonResponse(400, "{ \"error\": \"Invalid time values\"}");
@@ -744,6 +720,8 @@ void handleUpdateRelayAlarm()
 
         // Calculate new alarm queue
         calculateNextAlarm();
+
+        Serial.println("Updated alarm: " + String(alarm->getHour()) + ":" + String(alarm->getMinute()) + ":" + String(alarm->getSecond()));
 
         // Create response
         StaticJsonDocument<200> responseDoc;
