@@ -28,7 +28,7 @@ const String localIPURL = "http://" + APip.toString();
 WebServer server(80);
 
 // RTC
-RTC* rtc = RTC::getInstance();
+RTC* rtc = nullptr;
 
 // Relay Manager
 RelayManager relayManager;
@@ -61,6 +61,9 @@ void setup()
     Serial.begin(115200);
 
     Serial.println("LETS GOOOOO");
+
+    // Initialize the RTC
+    rtc = RTC::getInstance(22, 23);
 
     // Initialize the Relay Manager
     relayManager.addRelay(32, "Relay 1");
