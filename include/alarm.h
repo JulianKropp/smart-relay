@@ -23,6 +23,8 @@ class Alarm {
         bool state = false;
         std::array<bool, 7> weekdays = {false, false, false, false, false, false, false}; // Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday
 
+        DateTime calculateLastAlarm() const;
+
     public:
         Alarm(uint hour, uint minute, uint second, std::array<bool, 7> weekdays, Relay* relay, bool state);
         Alarm(String json, Relay *relay);
