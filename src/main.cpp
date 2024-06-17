@@ -158,18 +158,18 @@ void loop()
             Serial.println(alarms.size());
             for (Alarm *alarm : alarms)
             {
-                Serial.println("Checking alarm for relay " + alarm->getRelay()->getName() + " at " + String(alarm->getHour()) + ":" + String(alarm->getMinute()) + ":" + String(alarm->getSecond()) + " with state " + String(alarm->getState()) + " and weekdays: " + String(alarm->getWeekdays()[now.dayOfTheWeek()]) + " at " + String(now.timestamp()) + " and next alarm in " + String(alarm->getNextAlarminSeconds(now)) + " seconds from now and last calculation was " + String(now.unixtime() - lastAlarmCalculation.unixtime()) + " seconds ago");
+                Serial.println("Checking alarm for relay " + alarm->getRelay()->getName() + " at " + String(alarm->getHour()) + ":" + String(alarm->getMinute()) + ":" + String(alarm->getSecond()) + " with state " + String(alarm->getState()) + " and today: " + String(alarm->getWeekdays()[now.dayOfTheWeek()]) + " and next alarm in " + String(alarm->getNextAlarminSeconds(now)) + " seconds from now and last calculation was " + String(now.unixtime() - lastAlarmCalculation.unixtime()) + " seconds ago");
                 if (alarm->checkAlarm(now))
                 {
                     Relay* rel = alarm->getRelay();
                     if (alarm->getState())
                     {
-                        rel->On();
+                        alarm->turnOn();
                         Serial.println("Relay " + rel->getName() + " turned on");
                     }
                     else
                     {
-                        rel->Off();
+                        alarm->turnOff();
                         Serial.println("Relay " + rel->getName() + " turned off");
                     }
                     alarmQueue.pop();
