@@ -8,11 +8,16 @@ class RTC
 private:
     uint8_t sdaPin, sclPin;
     RTC_DS3231 rtc;
+    static RTC* instance; // Singleton instance
 
-public:
+    // Private constructor
     RTC(uint8_t sdaPin, uint8_t sclPin) : sdaPin(sdaPin), sclPin(sclPin) {};
 
-    void begin();
+public:
+    RTC(const RTC& other) = delete; // Disable copy constructor
+    void operator=(const RTC&) = delete; // Disable assignment operator
+
+    static RTC* getInstance(uint8_t sdaPin = 21, uint8_t sclSclPin = 22); // Method to get the instance
 
     DateTime now();
 

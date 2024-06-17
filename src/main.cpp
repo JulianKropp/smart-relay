@@ -28,10 +28,10 @@ const String localIPURL = "http://" + APip.toString();
 WebServer server(80);
 
 // RTC
-RTC rtc(22, 23);
+RTC* rtc = RTC::getInstance();
 
 // Relay Manager
-RelayManager relayManager(&rtc);
+RelayManager relayManager;
 std::queue<std::vector<Alarm *>> alarmQueue;
 
 // Function declarations
@@ -62,10 +62,6 @@ void setup()
 
     Serial.println("LETS GOOOOO");
 
-    // Initialize the RTC
-    rtc.begin();
-    DateTime now = rtc.now();
-
     // Initialize the Relay Manager
     relayManager.addRelay(32, "Relay 1");
     relayManager.addRelay(33, "Relay 2");
@@ -82,10 +78,13 @@ void setup()
         return;
     }
 
+    // get time now
+    DateTime now = rtc->now();
+
     // Start the Access Point
     WiFi.mode(WIFI_MODE_APSTA);
     String dynamicPart = String(now.hour()) + String(now.minute()) + String(now.second()) + String(now.day()) + String(now.month()) + String(now.year());
-    String fullSSID = String(APssid) + dynamicPart;
+    String fullSSID = String(APssid);
     WiFi.softAP(fullSSID, APpassword);
     WiFi.softAPConfig(APip, APip, APsubnet);
     dnsServer.setTTL(3600);
@@ -146,36 +145,35 @@ void loop()
 
     if (counter == 0)
     {
+        Serial.println(alarmQueue.size());
         // Check alarms
-        DateTime now = rtc.now();
+        DateTime now = rtc->now();
 
         if (!alarmQueue.empty())
         {
             std::vector<Alarm *> alarms = alarmQueue.front();
+            Serial.println(alarms.size());
             for (Alarm *alarm : alarms)
             {
+                Serial.println("Checking alarm for relay " + alarm->getRelay()->getName() + " at " + String(alarm->getHour()) + ":" + String(alarm->getMinute()) + ":" + String(alarm->getSecond()) + " with state " + String(alarm->getState()) + " and weekdays: " + String(alarm->getWeekdays()[now.dayOfTheWeek()]) + " at " + String(now.timestamp()) + " and next alarm in " + String(alarm->getNextAlarminSeconds(now)) + " seconds from now and last calculation was " + String(now.unixtime() - lastAlarmCalculation.unixtime()) + " seconds ago");
                 if (alarm->checkAlarm(now))
                 {
                     Relay* rel = alarm->getRelay();
                     if (alarm->getState())
                     {
                         rel->On();
+                        Serial.println("Relay " + rel->getName() + " turned on");
                     }
                     else
                     {
                         rel->Off();
+                        Serial.println("Relay " + rel->getName() + " turned off");
                     }
                     alarmQueue.pop();
+                    alarmQueue.push(alarms);
                     break;
                 }
             }
-        }
-
-        // lastAlarmCalculation < now - 24h, calculate new alarm queue
-        if (lastAlarmCalculation <= now - TimeSpan(1, 0, 0, 0))
-        {
-            calculateNextAlarm();
-            lastAlarmCalculation = now;
         }
     }
 
@@ -184,23 +182,46 @@ void loop()
 
 void calculateNextAlarm()
 {
+    Serial.println("Calculating next alarm");
+    DateTime now = rtc->now();
     alarmQueue = relayManager.getNextAlarm();
+    lastAlarmCalculation = now;
 
-    // Remove all alarms that are not in the next 24 hours
-    DateTime now = rtc.now();
-    while (!alarmQueue.empty())
-    {
-        std::vector<Alarm *> alarms = alarmQueue.front();
-        Alarm *alarm = alarms[0];
-        if (alarm->getNextAlarminSeconds(now) > 24 * 60 * 60)
-        {
-            alarmQueue.pop();
-        }
-        else
-        {
-            break;
-        }
-    }
+
+    // std::queue<std::vector<Alarm *>> tempQueue = alarmQueue;
+
+    // // Remove alarms which occurs in the last 60 seconds
+    // while (!alarmQueue.empty())
+    // {
+    //     std::vector<Alarm *> alarms = alarmQueue.front();
+    //     Alarm *alarm = alarms[0];
+    //     if (alarm->getNextAlarminSeconds(now) < 7*24*59*60)
+    //     {
+    //         tempQueue.push(alarms);
+    //     }
+    //     else {
+    //         Serial.println("Removing alarm: " + String(alarm->getHour()) + ":" + String(alarm->getMinute()) + ":" + String(alarm->getSecond()));
+    //     }
+    //     alarmQueue.pop();
+    // }
+
+    // alarmQueue = tempQueue;
+
+    // // Remove all alarms that are not in the next 24 hours
+    // DateTime now = rtc->now();
+    // while (!alarmQueue.empty())
+    // {
+    //     std::vector<Alarm *> alarms = alarmQueue.front();
+    //     Alarm *alarm = alarms[0];
+    //     if (alarm->getNextAlarminSeconds(now) > 24 * 60 * 60)
+    //     {
+    //         alarmQueue.pop();
+    //     }
+    //     else
+    //     {
+    //         break;
+    //     }
+    // }
 }
 
 // Utility functions
@@ -417,7 +438,7 @@ void handleSystemSettings()
 {
     try
     {
-        DateTime now = rtc.now();
+        DateTime now = rtc->now();
 
         StaticJsonDocument<200> doc;
         doc["systemName"] = systemName;
@@ -787,7 +808,7 @@ void handleServerTime()
 {
     try
     {
-        DateTime now = rtc.now();
+        DateTime now = rtc->now();
 
         StaticJsonDocument<200> doc;
         doc["hour"] = now.hour();
@@ -834,7 +855,7 @@ void handleUpdateServerTime()
             return;
         }
 
-        DateTime now = rtc.now();
+        DateTime now = rtc->now();
 
         // Get hour, minute, second, day, month, year
         int hourAdjustment = (doc["hourAdjustment"].as<int>() + now.hour()) % 24;
@@ -846,7 +867,7 @@ void handleUpdateServerTime()
         int day = systemDate.substring(8, 10).toInt();
 
         // Set the time
-        rtc.setDateTime(DateTime(year, month, day, hourAdjustment, minuteAdjustment, secondAdjustment));
+        rtc->setDateTime(DateTime(year, month, day, hourAdjustment, minuteAdjustment, secondAdjustment));
 
         // Calculate new alarm queue
         calculateNextAlarm();

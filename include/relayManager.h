@@ -13,11 +13,10 @@ class RelayManager
 {
 private:
     std::map<uint, Relay *> relays; // Add the std:: namespace qualifier
-    RTC *rtc;
 
 public:
-    RelayManager(RTC *rtc);
-    RelayManager(String json, RTC *rtc);
+    RelayManager();
+    RelayManager(String json);
     ~RelayManager();
 
     Relay *addRelay(const uint8_t pin, const String &name);

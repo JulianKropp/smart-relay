@@ -2,15 +2,12 @@
 #include "relay.h"
 #include "configManager.h"
 
-RelayManager::RelayManager(RTC *rtc)
+RelayManager::RelayManager()
 {
-    this->rtc = rtc;
 }
 
-RelayManager::RelayManager(String json, RTC *rtc)
+RelayManager::RelayManager(String json)
 {
-    this->rtc = rtc;
-
     DynamicJsonDocument doc(1024);
     deserializeJson(doc, json);
 
@@ -95,7 +92,7 @@ std::queue<std::vector<Alarm *>> RelayManager::getNextAlarm() const
         }
     }
 
-    DateTime now = this->rtc->now();
+    DateTime now = RTC::getInstance()->now();
 
     std::queue<std::vector<Alarm *>> alarmQueue;
     for (int i = 0; i < 7; i++)
@@ -114,7 +111,7 @@ std::queue<std::vector<Alarm *>> RelayManager::getNextAlarm() const
         // sort alarmsOfDay by element->getNextAlarminSeconds(midnight);
         DateTime midnight = DateTime(now.year(), now.month(), now.day() + i, 0, 0, 0);
         std::sort(alarmsOfDay.begin(), alarmsOfDay.end(), [midnight](Alarm *a, Alarm *b)
-                  { return a->getNextAlarminSeconds(midnight) < b->getNextAlarminSeconds(midnight); });
+                  { return a->getNextAlarminSeconds(midnight) > b->getNextAlarminSeconds(midnight); });
 
         // group alarms which have the same next alarm time together
         std::vector<Alarm *> groupedAlarms;
