@@ -30,6 +30,9 @@ WebServer server(80);
 // RTC
 RTC* rtc = nullptr;
 
+// ConfigManager
+ConfigManager* configManager = nullptr;
+
 // Relay Manager
 RelayManager relayManager;
 std::queue<std::vector<Alarm *>> alarmQueue;
@@ -55,6 +58,9 @@ void sendJsonResponse(int status, const String &message);
 
 void calculateNextAlarm();
 
+String LoadConfig();
+void SaveConfig();
+
 // Setup function
 void setup()
 {
@@ -65,11 +71,28 @@ void setup()
     // Initialize the RTC
     rtc = RTC::getInstance(22, 23);
 
+    // ConfigManager
+    configManager = ConfigManager::getInstance();
+
+    // Load config data
+    String config = LoadConfig();
+
     // Initialize the Relay Manager
-    relayManager.addRelay(32, "Relay 1");
-    relayManager.addRelay(33, "Relay 2");
-    relayManager.addRelay(25, "Relay 3");
-    relayManager.addRelay(26, "Relay 4");
+    if (config != "{}")
+    {
+        relayManager = RelayManager(config);
+    }
+    else
+    {
+        // Load default relays
+        relayManager.addRelay(32, "Relay 1");
+        relayManager.addRelay(33, "Relay 2");
+        relayManager.addRelay(25, "Relay 3");
+        relayManager.addRelay(26, "Relay 4");
+
+        // Save default relays
+        SaveConfig();
+    }
 
     // calculate new alarm queue
     calculateNextAlarm();
@@ -225,6 +248,14 @@ void calculateNextAlarm()
     //         break;
     //     }
     // }
+}
+
+void SaveConfig() {
+    configManager->setConfig("config", relayManager.toJson());
+}
+
+String LoadConfig() {
+    return configManager->getConfig("config", "{}");
 }
 
 // Utility functions
@@ -516,9 +547,8 @@ void handleUpdateSettings()
             }
         }
 
-        // Save data to NVS
-        ConfigManager &cm = ConfigManager::getInstance();
-        cm.setConfig("systemName", systemName);
+        // Save config
+        SaveConfig();
 
         StaticJsonDocument<200> responseDoc;
         responseDoc["message"] = "Settings updated successfully";
@@ -655,6 +685,9 @@ void handleCreateRelayAlarm()
         // Calculate new alarm queue
         calculateNextAlarm();
 
+        // Save config
+        SaveConfig();
+
         // Create response
         StaticJsonDocument<200> responseDoc;
         responseDoc["message"] = "Relay alarm rule created successfully";
@@ -746,6 +779,9 @@ void handleUpdateRelayAlarm()
         calculateNextAlarm();
 
         Serial.println("Updated alarm: " + String(alarm->getHour()) + ":" + String(alarm->getMinute()) + ":" + String(alarm->getSecond()));
+
+        // Save config
+        SaveConfig();
 
         // Create response
         StaticJsonDocument<200> responseDoc;

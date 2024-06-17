@@ -12,10 +12,15 @@ private:
     ConfigManager(const ConfigManager&) = delete;
     ConfigManager& operator=(const ConfigManager&) = delete;
 
+    // Private static instance pointer
+    static ConfigManager* instance;
+
 public:
     // Get the singleton instance
-    static ConfigManager& getInstance() {
-        static ConfigManager instance;
+    static ConfigManager* getInstance() {
+        if (instance == nullptr) {
+            instance = new ConfigManager();
+        }
         return instance;
     }
 

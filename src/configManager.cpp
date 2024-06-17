@@ -1,5 +1,7 @@
 #include "configManager.h"
 
+ConfigManager *ConfigManager::instance = nullptr;
+
 void ConfigManager::setConfig(const String &key, const String &value)
 {
     nvs_handle_t handle;
