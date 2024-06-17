@@ -14,6 +14,8 @@ class Alarm {
         static uint idCounter;
         uint id;
 
+        DateTime lastAlarm;
+
         Relay* relay = nullptr;
         uint hour = 0;
         uint minute = 0;
@@ -33,6 +35,12 @@ class Alarm {
         std::array<bool, 7> getWeekdays() const;
         Relay* getRelay() const;
         bool getState() const;
+
+        DateTime lastTimeTriggert() const;
+
+        // relay ON/OFF
+        void turnOn();
+        void turnOff();
 
         // set methods
         void setHour(const uint hour);

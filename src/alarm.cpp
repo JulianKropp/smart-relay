@@ -39,6 +39,9 @@ Alarm::Alarm(String json, Relay *relay)
     }
     this->relay = relay;
     state = doc["state"].as<bool>();
+
+    // Set last alarm to 0
+    lastAlarm = DateTime(0, 0, 0, 0, 0, 0);
 }
 
 int Alarm::getId()
@@ -76,6 +79,23 @@ bool Alarm::getState() const
     return state;
 }
 
+DateTime Alarm::lastTimeTriggert() const
+{
+    return lastAlarm;
+}
+
+void Alarm::turnOn()
+{
+    relay->On();
+    this->lastAlarm = RTC::getInstance()->now();
+}
+
+void Alarm::turnOff()
+{
+    relay->Off();
+    this->lastAlarm = RTC::getInstance()->now();
+}
+
 void Alarm::setHour(const uint hour)
 {
     this->hour = hour;
@@ -108,20 +128,11 @@ void Alarm::setState(bool state)
 
 // This will check if alarm is in time range between now and the past 24h from now
 bool Alarm::checkAlarm(DateTime now) const {
-    // Get now-24h
-    DateTime now24h = now - TimeSpan(1, 0, 0, 0); // Subtract 1 day (24 hours)
 
-    // Create alarm time for today
-    DateTime alarmTime(now.year(), now.month(), now.day(), hour, minute, second);
+    uint sec = this->getNextAlarminSeconds(now);
+    DateTime last = this->lastAlarm;
 
-    // Check if the alarm is set for today
-    if (weekdays[now.dayOfTheWeek()] && alarmTime <= now && alarmTime > now24h) {
-        return true;
-    }
-
-    // Check if the alarm is set for the previous day
-    DateTime yesterdayAlarmTime = alarmTime - TimeSpan(1, 0, 0, 0); // Subtract 1 day from the alarm time
-    if (weekdays[yesterdayAlarmTime.dayOfTheWeek()] && yesterdayAlarmTime <= now && yesterdayAlarmTime > now24h) {
+    if (sec == 0 || sec < 7*24*59*60 && last > now - TimeSpan(0, 0, 1, 0)) {
         return true;
     }
 
