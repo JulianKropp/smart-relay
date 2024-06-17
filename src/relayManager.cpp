@@ -94,52 +94,36 @@ std::queue<std::vector<Alarm *>> RelayManager::getNextAlarm() const
 
     DateTime now = RTC::getInstance()->now();
 
+    // Sort alarms
+    std::sort(alarms.begin(), alarms.end(), [now](Alarm *a, Alarm *b)
+              { return a->getNextAlarminSeconds(now) < b->getNextAlarminSeconds(now); });
+
     std::queue<std::vector<Alarm *>> alarmQueue;
-    for (int i = 0; i < 7; i++)
+
+    // group alarms which have the same next alarm time together
+    std::vector<Alarm *> groupedAlarms;
+    for (auto const &element : alarms)
     {
-        std::vector<Alarm *> alarmsOfDay;
-
-        int weekday = (now.dayOfTheWeek() + i) % 7;
-        for (auto const &element : alarms)
+        if (groupedAlarms.size() == 0)
         {
-            if (element->getWeekdays()[weekday])
-            {
-                alarmsOfDay.push_back(element);
-            }
+            groupedAlarms.push_back(element);
         }
-
-        // sort alarmsOfDay by element->getNextAlarminSeconds(midnight);
-        DateTime midnight = DateTime(now.year(), now.month(), now.day() + i, 0, 0, 0);
-        std::sort(alarmsOfDay.begin(), alarmsOfDay.end(), [midnight](Alarm *a, Alarm *b)
-                  { return a->getNextAlarminSeconds(midnight) > b->getNextAlarminSeconds(midnight); });
-
-        // group alarms which have the same next alarm time together
-        std::vector<Alarm *> groupedAlarms;
-        for (auto const &element : alarmsOfDay)
+        else
         {
-            if (groupedAlarms.size() == 0)
+            if (element->getNextAlarminSeconds(now) == groupedAlarms[0]->getNextAlarminSeconds(now))
             {
                 groupedAlarms.push_back(element);
-                // if last element add to queue
-                if (element == alarmsOfDay.back())
-                {
-                    alarmQueue.push(groupedAlarms);
-                }
             }
             else
             {
-                if (element->getNextAlarminSeconds(midnight) == groupedAlarms[0]->getNextAlarminSeconds(midnight))
-                {
-                    groupedAlarms.push_back(element);
-                }
-                else
-                {
-                    alarmQueue.push(groupedAlarms);
-                    groupedAlarms.clear();
-                    groupedAlarms.push_back(element);
-                }
+                alarmQueue.push(groupedAlarms);
+                groupedAlarms.clear();
+                groupedAlarms.push_back(element);
             }
         }
+    }
+    if (groupedAlarms.size() > 0) {
+        alarmQueue.push(groupedAlarms);
     }
 
     return alarmQueue;
