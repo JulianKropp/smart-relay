@@ -74,7 +74,7 @@ Alarm::Alarm(String json, Relay *relay)
     this->lastAlarm = this->calculateLastAlarm();
 }
 
-int Alarm::getId()
+uint Alarm::getId()
 {
     return id;
 }

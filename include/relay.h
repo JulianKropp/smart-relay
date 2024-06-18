@@ -25,7 +25,7 @@ class Relay {
         Relay(const uint8_t pin, const String& name);
         Relay(String json);
         ~Relay();
-        int getId();
+        uint getId();
         String getName();
         void setName(const String& name);
         uint8_t getPin();

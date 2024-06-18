@@ -30,7 +30,7 @@ class Alarm {
         Alarm(String json, Relay *relay);
 
         // get methods
-        int getId();
+        uint getId();
         uint getHour() const;
         uint getMinute() const;
         uint getSecond() const;

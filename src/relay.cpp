@@ -47,7 +47,7 @@ Relay::~Relay() {
     }
 }
 
-int Relay::getId() {
+uint Relay::getId() {
     return this->id;
 }
 
@@ -86,8 +86,8 @@ Alarm* Relay::addAlarm(uint hour, uint minute, uint second, std::array<bool, 7> 
 void Relay::removeAlarm(const uint id) {
     auto it = alarms.find(id);
     if (it != alarms.end()) {
-        alarms.erase(it);
         delete it->second;
+        alarms.erase(it);
     }
 }
 
