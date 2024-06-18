@@ -12,6 +12,16 @@ void ConfigManager::setConfig(const String &key, const String &value)
         nvs_commit(handle);
         nvs_close(handle);
     }
+    if (err == ESP_ERR_NVS_NOT_ENOUGH_SPACE)
+    {
+        nvs_close(handle);
+        throw std::runtime_error("NVS storage is full");
+    }
+    if (err != ESP_OK)
+    {
+        nvs_close(handle);
+        throw std::runtime_error("Failed to set config");
+    }
 }
 
 String ConfigManager::getConfig(const String &key, const String &default_value) const

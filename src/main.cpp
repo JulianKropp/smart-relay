@@ -94,7 +94,11 @@ void setup()
         relayManager->addRelay(26, "Relay 4");
 
         // Save default relays
-        SaveConfig();
+        try {
+            SaveConfig();
+        } catch (const std::exception &e) {
+            Serial.println("Failed to save default config");
+        }
     }
 
     size_t free_heap = esp_get_free_heap_size();
