@@ -60,7 +60,9 @@ void handleReset();            // - **Endpoint**: `/api/reset` POST
 void sendJsonResponse(int status, const String &message);
 
 void factoryreset();
+void restart();
 void calculateNextAlarm();
+void toggleWifi();
 void IRAM_ATTR handleButtonPress();
 
 String LoadConfig();
@@ -106,6 +108,9 @@ void setup()
         {
             Serial.println("Failed to save default config");
         }
+
+        // Turn on wifi
+        toggleWifi();
     }
 
     // calculate new alarm queue
@@ -118,18 +123,8 @@ void setup()
         return;
     }
 
-    // get time now
-    DateTime now = rtc->now();
-
-    // Start the Access Point
-    WiFi.mode(WIFI_MODE_APSTA);
-    String dynamicPart = String(now.hour()) + String(now.minute()) + String(now.second()) + String(now.day()) + String(now.month()) + String(now.year());
-    String fullSSID = String(APssid);
-    WiFi.softAP(fullSSID, APpassword);
-    WiFi.softAPConfig(APip, APip, APsubnet);
+    // // Start Web services
     dnsServer.setTTL(3600);
-    dnsServer.start(DNS_PORT, "*", APip);
-    Serial.println("Access Point started");
 
     // Define routes for the WebServer
     server.onNotFound([]()
@@ -167,10 +162,6 @@ void setup()
     server.on("/api/update-firmware", HTTP_POST, handleFirmwareUpdate);
     server.on("/api/reset", HTTP_POST, handleReset);
 
-    // Start the server
-    server.begin();
-    Serial.println("HTTP server started");
-
     // Initialize the button pin as an input
     pinMode(BUTTON_PIN, INPUT_PULLDOWN); // Using pull-up resistor
     // Attach the interrupt to the button pin for both rising and falling edges
@@ -184,15 +175,20 @@ volatile unsigned long buttonPressTime = 0;
 volatile bool buttonPressed = false;
 volatile bool buttonPressedShort = false;
 volatile bool longPressDetected = false;
+unsigned long timeWifiTurnedOn = 0;
+bool wifiOn = false;
 void loop()
 {
     counter = (counter + 1) % 1000;
 
-    if (counter % 30 == 0)
+    if (wifiOn)
     {
-        dnsServer.processNextRequest();
+        if (counter % 30 == 0)
+        {
+            dnsServer.processNextRequest();
+        }
+        server.handleClient();
     }
-    server.handleClient();
 
     if (counter == 0)
     {
@@ -232,6 +228,7 @@ void loop()
     if (buttonPressedShort && !longPressDetected)
     {
         Serial.println("Button Pressed briefly!");
+        toggleWifi();
         buttonPressedShort = false;
     }
 
@@ -239,10 +236,59 @@ void loop()
     if (longPressDetected)
     {
         Serial.println("Button Pressed for more than 10 seconds!");
+        factoryreset();
+        restart();
         longPressDetected = false; // Reset the long press detection
     }
 
+    if (wifiOn && millis() - timeWifiTurnedOn > WIFI_ON_TIME)
+    {
+        Serial.println("Turning off wifi after 1 hour of inactivity");
+        toggleWifi();
+    }
+
     delay(1);
+}
+
+void toggleWifi()
+{
+    Serial.println("Toggling wifi. Status: " + String(wifiOn ? "APon" : "APoff"));
+    if (wifiOn)
+    {
+        // Stop dns and http server
+        dnsServer.stop();
+        Serial.println("DNS server stopped");
+        server.stop();
+        Serial.println("HTTP server stopped");
+
+        WiFi.disconnect(true);
+        WiFi.mode(WIFI_OFF);
+        Serial.println("Wifi turned off");
+
+        timeWifiTurnedOn = 0;
+        wifiOn = false;
+    }
+    else
+    {
+        DateTime now = rtc->now();
+        WiFi.mode(WIFI_MODE_APSTA);
+        String dynamicPart = String(now.hour()) + String(now.minute()) + String(now.second()) + String(now.day()) + String(now.month()) + String(now.year());
+        String fullSSID = String(APssid);
+        WiFi.softAP(fullSSID, APpassword);
+        WiFi.softAPConfig(APip, APip, APsubnet);
+        Serial.println("Wifi turned on");
+
+        // Start the DNS server
+        dnsServer.start(DNS_PORT, "*", APip);
+        Serial.println("DNS server started");
+
+        // Start the server
+        server.begin();
+        Serial.println("HTTP server started");
+
+        timeWifiTurnedOn = millis();
+        wifiOn = true;
+    }
 }
 
 // Interrupt service routine (ISR) for the button press
@@ -1039,10 +1085,8 @@ void handleReset()
     try
     {
         factoryreset();
-
         server.send(200, "application/json", "{\"message\": \"Device reset\"}");
-        delay(1000);
-        ESP.restart();
+        restart();
     }
     catch (const std::exception &e)
     {
@@ -1054,4 +1098,11 @@ void factoryreset()
 {
     ConfigManager *cm = ConfigManager::getInstance();
     cm->setConfig("config", "{}");
+}
+
+void restart()
+{
+    Serial.println("Restarting device");
+    delay(1000);
+    ESP.restart();
 }
