@@ -155,6 +155,7 @@ String RelayManager::toJson() const
                 alarmDoc["weekdays"][i] = alarm->getWeekdays()[i];
             }
             alarmDoc["relay"] = alarm->getRelay()->getId();
+            alarmDoc["state"] = alarm->getState();
             alarmsArray.add(alarmDoc);
         }
         relaysArray.add(relayDoc);
