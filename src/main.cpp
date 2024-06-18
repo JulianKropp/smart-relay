@@ -28,14 +28,18 @@ const String localIPURL = "http://" + APip.toString();
 // Create the WebServer (port 80)
 WebServer server(80);
 
+#define BUTTON_PIN 5
+#define LONG_PRESS_TIME 10000 // 10 seconds in milliseconds
+#define WIFI_ON_TIME 3600000  // 1 hour in milliseconds
+
 // RTC
-RTC* rtc = nullptr;
+RTC *rtc = nullptr;
 
 // ConfigManager
-ConfigManager* configManager = nullptr;
+ConfigManager *configManager = nullptr;
 
 // Relay Manager
-RelayManager* relayManager;
+RelayManager *relayManager;
 std::queue<std::vector<Alarm *>> alarmQueue;
 
 // Function declarations
@@ -55,10 +59,9 @@ void handleFirmwareUpdate();   // - **Endpoint**: `/api/update-firmware` POST
 void handleReset();            // - **Endpoint**: `/api/reset` POST
 void sendJsonResponse(int status, const String &message);
 
-// void loadSettings();
-// void saveSettings();
-
+void factoryreset();
 void calculateNextAlarm();
+void IRAM_ATTR handleButtonPress();
 
 String LoadConfig();
 void SaveConfig();
@@ -95,37 +98,14 @@ void setup()
         relayManager->addRelay(26, "Relay 4");
 
         // Save default relays
-        try {
+        try
+        {
             SaveConfig();
-        } catch (const std::exception &e) {
+        }
+        catch (const std::exception &e)
+        {
             Serial.println("Failed to save default config");
         }
-    }
-
-    size_t free_heap = esp_get_free_heap_size();
-    ESP_LOGI("RAM", "Free heap size: %d bytes", free_heap);
-    // To get more detailed information about the heap
-    size_t free_8bit_heap = heap_caps_get_free_size(MALLOC_CAP_8BIT);
-    ESP_LOGI("RAM", "Free 8-bit capable heap size: %d bytes", free_8bit_heap);
-
-    Serial.println("Free heap size: " + String(free_heap) + " bytes");
-    Serial.println("Free 8-bit capable heap size: " + String(free_8bit_heap) + " bytes");
-
-    // Print all relays and alarms
-    std::vector<uint> relays = relayManager->getRelayIDs();
-    for (uint id : relays)
-    {
-        Serial.println("--------------------");
-        Relay *relay = relayManager->getRelayByID(id);
-        Serial.println("ID: " + String(relay->getId()) + " Name:" + relay->getName() + " Pin:" + relay->getPin() + " Alarms:" + String(relay->getAlarmIDs().size()) + " Pointer: " + String((uint)relay));
-        Serial.println("Relay: " + relay->getName());
-        std::vector<uint> alarms = relay->getAlarmIDs();
-        for (uint alarmId : alarms)
-        {
-            Alarm *alarm = relay->getAlarmByID(alarmId);
-            Serial.println("Alarm: " + String(alarm->getHour()) + ":" + String(alarm->getMinute()) + ":" + String(alarm->getSecond()));
-        }
-        Serial.println("--------------------");
     }
 
     // calculate new alarm queue
@@ -190,16 +170,26 @@ void setup()
     // Start the server
     server.begin();
     Serial.println("HTTP server started");
+
+    // Initialize the button pin as an input
+    pinMode(BUTTON_PIN, INPUT_PULLDOWN); // Using pull-up resistor
+    // Attach the interrupt to the button pin for both rising and falling edges
+    attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), handleButtonPress, CHANGE);
 }
 
 // Main loop
 uint counter = 0;
 DateTime lastAlarmCalculation = DateTime(2020, 1, 1, 0, 0, 0);
+volatile unsigned long buttonPressTime = 0;
+volatile bool buttonPressed = false;
+volatile bool buttonPressedShort = false;
+volatile bool longPressDetected = false;
 void loop()
 {
     counter = (counter + 1) % 1000;
 
-    if (counter % 30 == 0) {
+    if (counter % 30 == 0)
+    {
         dnsServer.processNextRequest();
     }
     server.handleClient();
@@ -219,7 +209,7 @@ void loop()
                 Serial.println("Checking alarm for relay " + alarm->getRelay()->getName() + " at " + String(alarm->getHour()) + ":" + String(alarm->getMinute()) + ":" + String(alarm->getSecond()) + " with state " + String(alarm->getState()) + " and today: " + String(alarm->getWeekdays()[now.dayOfTheWeek()]) + " and next alarm in " + String(alarm->getNextAlarminSeconds(now)) + " seconds from now and last calculation was " + String(now.unixtime() - lastAlarmCalculation.unixtime()) + " seconds ago");
                 if (alarm->checkAlarm(now))
                 {
-                    Relay* rel = alarm->getRelay();
+                    Relay *rel = alarm->getRelay();
                     if (alarm->getState())
                     {
                         alarm->turnOn();
@@ -238,7 +228,50 @@ void loop()
         }
     }
 
+    // Check if a normal press was detected
+    if (buttonPressedShort && !longPressDetected)
+    {
+        Serial.println("Button Pressed briefly!");
+        buttonPressedShort = false;
+    }
+
+    // Check if a long press was detected
+    if (longPressDetected)
+    {
+        Serial.println("Button Pressed for more than 10 seconds!");
+        longPressDetected = false; // Reset the long press detection
+    }
+
     delay(1);
+}
+
+// Interrupt service routine (ISR) for the button press
+void IRAM_ATTR handleButtonPress()
+{
+    if (digitalRead(BUTTON_PIN) == HIGH)
+    {                               // Check if button is actually pressed
+        buttonPressTime = millis(); // Record the time the button was pressed
+        buttonPressed = true;
+    }
+    else
+    {
+        if (buttonPressed)
+        {
+            buttonPressed = false; // Reset the button press flag
+
+            if (millis() - buttonPressTime > 10000)
+            {                             // Check if the button was pressed for more than 10 seconds
+                longPressDetected = true; // Set the long press flag
+            }
+            else
+            {
+                if (millis() - buttonPressTime > 50)
+                {
+                    buttonPressedShort = true; // Set the normal press flag
+                }
+            }
+        }
+    }
 }
 
 void calculateNextAlarm()
@@ -247,49 +280,15 @@ void calculateNextAlarm()
     DateTime now = rtc->now();
     alarmQueue = relayManager->getNextAlarm();
     lastAlarmCalculation = now;
-
-
-    // std::queue<std::vector<Alarm *>> tempQueue = alarmQueue;
-
-    // // Remove alarms which occurs in the last 60 seconds
-    // while (!alarmQueue.empty())
-    // {
-    //     std::vector<Alarm *> alarms = alarmQueue.front();
-    //     Alarm *alarm = alarms[0];
-    //     if (alarm->getNextAlarminSeconds(now) < 7*24*59*60)
-    //     {
-    //         tempQueue.push(alarms);
-    //     }
-    //     else {
-    //         Serial.println("Removing alarm: " + String(alarm->getHour()) + ":" + String(alarm->getMinute()) + ":" + String(alarm->getSecond()));
-    //     }
-    //     alarmQueue.pop();
-    // }
-
-    // alarmQueue = tempQueue;
-
-    // // Remove all alarms that are not in the next 24 hours
-    // DateTime now = rtc->now();
-    // while (!alarmQueue.empty())
-    // {
-    //     std::vector<Alarm *> alarms = alarmQueue.front();
-    //     Alarm *alarm = alarms[0];
-    //     if (alarm->getNextAlarminSeconds(now) > 24 * 60 * 60)
-    //     {
-    //         alarmQueue.pop();
-    //     }
-    //     else
-    //     {
-    //         break;
-    //     }
-    // }
 }
 
-void SaveConfig() {
+void SaveConfig()
+{
     configManager->setConfig("config", relayManager->toJson());
 }
 
-String LoadConfig() {
+String LoadConfig()
+{
     return configManager->getConfig("config", "{}");
 }
 
@@ -962,70 +961,97 @@ void handleUpdateServerTime()
     }
 }
 
-void handleFirmwareUpdate() {
+void handleFirmwareUpdate()
+{
     size_t freeHeap = ESP.getFreeHeap();
     Serial.printf("Free Heap: %u\n", freeHeap);
 
-
-    HTTPUpload& upload = server.upload();
+    HTTPUpload &upload = server.upload();
     static bool isFSUpdate = false;
 
-    if (upload.status == UPLOAD_FILE_START) {
+    if (upload.status == UPLOAD_FILE_START)
+    {
         Serial.printf("Update: %s\n", upload.filename.c_str());
-        if (upload.filename.endsWith(".bin")) {
+        if (upload.filename.endsWith(".bin"))
+        {
             isFSUpdate = false;
             Serial.println("Firmware update started");
-            if (!Update.begin(UPDATE_SIZE_UNKNOWN, U_FLASH)) {
+            if (!Update.begin(UPDATE_SIZE_UNKNOWN, U_FLASH))
+            {
                 Update.printError(Serial);
             }
-        } else if (upload.filename.endsWith(".spiffs") || upload.filename.endsWith(".littlefs")) {
+        }
+        else if (upload.filename.endsWith(".spiffs") || upload.filename.endsWith(".littlefs"))
+        {
             isFSUpdate = true;
             Serial.println("Filesystem update started");
-            if (!Update.begin(UPDATE_SIZE_UNKNOWN, U_SPIFFS)) {
+            if (!Update.begin(UPDATE_SIZE_UNKNOWN, U_SPIFFS))
+            {
                 Update.printError(Serial);
             }
-        } else {
+        }
+        else
+        {
             Serial.println("Unknown file type");
             server.send(400, "application/json", "{\"error\": \"Invalid file type\"}");
             return;
         }
-    } else if (upload.status == UPLOAD_FILE_WRITE) {
+    }
+    else if (upload.status == UPLOAD_FILE_WRITE)
+    {
         size_t written = 0;
         Serial.printf("Writing to update: %u bytes\n", upload.currentSize);
-        while (written < upload.currentSize) {
+        while (written < upload.currentSize)
+        {
             size_t chunkSize = min(UPDATE_CHUNK_SIZE, (int)(upload.currentSize - written));
             size_t bytesWritten = Update.write(upload.buf + written, chunkSize);
             Serial.printf("Bytes written: %u/%u\n", written, upload.currentSize);
-            if (bytesWritten != chunkSize) {
+            if (bytesWritten != chunkSize)
+            {
                 Update.printError(Serial);
                 return;
             }
             written += bytesWritten;
         }
-    } else if (upload.status == UPLOAD_FILE_END) {
-        if (Update.end(true)) {
+    }
+    else if (upload.status == UPLOAD_FILE_END)
+    {
+        if (Update.end(true))
+        {
             Serial.printf("Update Success: %u bytes\n", upload.totalSize);
-        } else {
+        }
+        else
+        {
             Update.printError(Serial);
         }
-    } else {
+    }
+    else
+    {
         Serial.println("Invalid file upload status");
         server.send(400, "application/json", "{\"error\": \"Invalid file upload\"}");
     }
 }
 
-void handleReset() {
+void handleReset()
+{
     Serial.println("Resetting device");
 
-    try {
-        ConfigManager* cm = ConfigManager::getInstance();
-
-        cm->setConfig("config", "{}");
+    try
+    {
+        factoryreset();
 
         server.send(200, "application/json", "{\"message\": \"Device reset\"}");
         delay(1000);
         ESP.restart();
-    } catch (const std::exception &e) {
+    }
+    catch (const std::exception &e)
+    {
         server.send(500, "application/json", "{\"error\": \"Failed to reset device\"}");
     }
+}
+
+void factoryreset()
+{
+    ConfigManager *cm = ConfigManager::getInstance();
+    cm->setConfig("config", "{}");
 }
