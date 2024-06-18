@@ -283,7 +283,14 @@ void toggleWifi()
             DateTime now = rtc->now();
             String dynamicPart = String(now.hour()) + String(now.minute()) + String(now.second()) + String(now.day()) + String(now.month()) + String(now.year());
             fullSSID = String(APssid + dynamicPart);
-            configManager->setConfig("ssid", fullSSID);
+            try
+            {
+                configManager->setConfig("ssid", fullSSID);
+            }
+            catch (const std::exception &e)
+            {
+                Serial.println("Failed to save ssid");
+            }
         }
 
         WiFi.mode(WIFI_MODE_APSTA);
