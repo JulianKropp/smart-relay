@@ -12,8 +12,8 @@
 #include <DNSServer.h>
 #include <algorithm>
 
-#define SDA_PIN 22
-#define SCL_PIN 23
+#define SDA_PIN 15
+#define SCL_PIN 2
 #define RELAY1_PIN 32
 #define RELAY2_PIN 33
 #define RELAY3_PIN 25
@@ -23,6 +23,8 @@
 #define WIFI_ON_TIME 3600000  // 1 hour in milliseconds
 
 #define UPDATE_CHUNK_SIZE 1024
+
+#define LOOP_SPEED 100 // in ms
 
 // settings
 const char *APssid = "Smart-Relays-"; // SSID + dynamic part
@@ -185,7 +187,7 @@ unsigned long timeWifiTurnedOn = 0;
 bool wifiOn = false;
 void loop()
 {
-    counter = (counter + 1) % 1000;
+    counter = (counter + 1) % LOOP_SPEED;
 
     if (wifiOn)
     {
