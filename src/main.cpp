@@ -15,7 +15,6 @@
 #define UPDATE_CHUNK_SIZE 1024
 
 // settings
-String systemName = "Smart Relays";
 const char *APssid = "Smart-Relays-";
 const char *APpassword = NULL;
 IPAddress APip(192, 168, 4, 1);
@@ -417,7 +416,7 @@ void handleGetAllRelays()
     try
     {
         StaticJsonDocument<500> doc; // Adjust size as needed
-        doc["systemName"] = systemName;
+        doc["systemName"] = relayManager->getName();
         JsonArray relaysArray = doc.createNestedArray("relays");
         std::vector<uint> relayIDs = relayManager->getRelayIDs();
         for (uint id : relayIDs)
@@ -510,7 +509,7 @@ void handleSystemSettings()
         DateTime now = rtc->now();
 
         StaticJsonDocument<200> doc;
-        doc["systemName"] = systemName;
+        doc["systemName"] = relayManager->getName();
 
         // Format month and day with leading zeros
         String month = String(now.month());
@@ -568,7 +567,7 @@ void handleUpdateSettings()
             return;
         }
 
-        systemName = doc["systemName"].as<String>();
+        relayManager->setName(doc["systemName"].as<String>());
 
         // Update relays
         for (auto relay : doc["relays"].as<JsonArray>())

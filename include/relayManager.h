@@ -13,6 +13,7 @@ class RelayManager
 {
 private:
     std::map<uint, Relay *> relays; // Add the std:: namespace qualifier
+    String name = "Smart-Relay";
 
 public:
     RelayManager();
@@ -23,6 +24,9 @@ public:
     vector<uint> getRelayIDs() const;
     Relay *getRelayByID(const uint id) const;
     void removeRelayByID(const uint id);
+
+    String getName() const;
+    void setName(const String &name);
 
     std::queue<std::vector<Alarm *>> getNextAlarm() const;
 

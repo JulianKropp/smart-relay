@@ -11,6 +11,8 @@ RelayManager::RelayManager(String json)
     DynamicJsonDocument doc(1024);
     deserializeJson(doc, json);
 
+    this->name = doc["name"].as<String>();
+
     JsonArray relaysArray = doc["relays"];
     for (JsonVariant relay : relaysArray)
     {
@@ -129,9 +131,22 @@ std::queue<std::vector<Alarm *>> RelayManager::getNextAlarm() const
     return alarmQueue;
 }
 
+ String RelayManager::getName() const
+{
+    return this->name;
+}
+
+void RelayManager::setName(const String &name)
+{
+    this->name = name;
+}
+
 String RelayManager::toJson() const
 {
     DynamicJsonDocument doc(1024);
+
+    doc["name"] = this->name;
+
     JsonArray relaysArray = doc.createNestedArray("relays");
     for (auto const &element : this->relays)
     {
