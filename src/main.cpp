@@ -12,10 +12,20 @@
 #include <DNSServer.h>
 #include <algorithm>
 
+#define SDA_PIN 22
+#define SCL_PIN 23
+#define RELAY1_PIN 32
+#define RELAY2_PIN 33
+#define RELAY3_PIN 25
+#define RELAY4_PIN 26
+#define BUTTON_PIN 5
+#define LONG_PRESS_TIME 10000 // 10 seconds in milliseconds
+#define WIFI_ON_TIME 3600000  // 1 hour in milliseconds
+
 #define UPDATE_CHUNK_SIZE 1024
 
 // settings
-const char *APssid = "Smart-Relays-";
+const char *APssid = "Smart-Relays-"; // SSID + dynamic part
 const char *APpassword = NULL;
 IPAddress APip(192, 168, 4, 1);
 IPAddress APsubnet(255, 255, 255, 0);
@@ -27,10 +37,6 @@ const String localIPURL = "http://" + APip.toString();
 
 // Create the WebServer (port 80)
 WebServer server(80);
-
-#define BUTTON_PIN 5
-#define LONG_PRESS_TIME 10000 // 10 seconds in milliseconds
-#define WIFI_ON_TIME 3600000  // 1 hour in milliseconds
 
 // RTC
 RTC *rtc = nullptr;
@@ -76,7 +82,7 @@ void setup()
     Serial.println("LETS GOOOOO");
 
     // Initialize the RTC
-    rtc = RTC::getInstance(22, 23);
+    rtc = RTC::getInstance(SDA_PIN, SCL_PIN);
 
     // ConfigManager
     configManager = ConfigManager::getInstance();
@@ -94,10 +100,10 @@ void setup()
     {
         // Load default relays
         relayManager = new RelayManager();
-        relayManager->addRelay(32, "Relay 1");
-        relayManager->addRelay(33, "Relay 2");
-        relayManager->addRelay(25, "Relay 3");
-        relayManager->addRelay(26, "Relay 4");
+        relayManager->addRelay(RELAY1_PIN, "Relay 1");
+        relayManager->addRelay(RELAY2_PIN, "Relay 2");
+        relayManager->addRelay(RELAY3_PIN, "Relay 3");
+        relayManager->addRelay(RELAY4_PIN, "Relay 4");
 
         // Save default relays
         try
@@ -270,10 +276,17 @@ void toggleWifi()
     }
     else
     {
-        DateTime now = rtc->now();
+        // Load ssid from config or generate a new one
+        String fullSSID = configManager->getConfig("ssid", "");
+        if (fullSSID == "")
+        {
+            DateTime now = rtc->now();
+            String dynamicPart = String(now.hour()) + String(now.minute()) + String(now.second()) + String(now.day()) + String(now.month()) + String(now.year());
+            fullSSID = String(APssid + dynamicPart);
+            configManager->setConfig("ssid", fullSSID);
+        }
+
         WiFi.mode(WIFI_MODE_APSTA);
-        String dynamicPart = String(now.hour()) + String(now.minute()) + String(now.second()) + String(now.day()) + String(now.month()) + String(now.year());
-        String fullSSID = String(APssid);
         WiFi.softAP(fullSSID, APpassword);
         WiFi.softAPConfig(APip, APip, APsubnet);
         Serial.println("Wifi turned on");
