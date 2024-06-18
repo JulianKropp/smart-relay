@@ -208,6 +208,20 @@ body {
   border-radius: 5px;
 }
 
+.reset-rule {
+  background-color: #f44336;
+  /* Red */
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  text-decoration: none;
+  font-size: 16px;
+  margin: 5px;
+  cursor: pointer;
+  border-radius: 5px;
+  width: 100%;
+}
+
 .confirm-cancel-buttons {
   display: flex;
   gap: 10px;
@@ -245,6 +259,7 @@ button.cancel-delete {
 }
 
 .add-rule:hover,
+.reset-rule:hover,
 .delete-rule:hover {
   opacity: 0.8;
 }

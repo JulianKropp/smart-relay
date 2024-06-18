@@ -504,4 +504,24 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Initial fetch to set the time and date on page load
     fetchServerTime();
+
+
+    document.getElementById('reset').addEventListener('click', function () {
+        fetch('/api/reset', {
+            method: 'POST'
+        })
+        .then(response => {
+            if (response.ok) {
+                alert('System reset.');
+                // Reload the page
+                location.reload();
+            } else {
+                alert('Failed to reset the system.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred.');
+        });
+    });
 });

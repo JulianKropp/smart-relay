@@ -52,6 +52,7 @@ void handleDeleteRelayAlarm(); // - **Endpoint**: `/api/relay-alarm?relayId=:rel
 void handleServerTime();       // - **Endpoint**: `/api/server-time` GET
 void handleUpdateServerTime(); // - **Endpoint**: `/api/server-time` POST
 void handleFirmwareUpdate();   // - **Endpoint**: `/api/update-firmware` POST
+void handleReset();            // - **Endpoint**: `/api/reset` POST
 void sendJsonResponse(int status, const String &message);
 
 // void loadSettings();
@@ -87,6 +88,7 @@ void setup()
     else
     {
         // Load default relays
+        relayManager = new RelayManager();
         relayManager->addRelay(32, "Relay 1");
         relayManager->addRelay(33, "Relay 2");
         relayManager->addRelay(25, "Relay 3");
@@ -183,6 +185,7 @@ void setup()
     server.on("/api/server-time", HTTP_GET, handleServerTime);
     server.on("/api/server-time", HTTP_POST, handleUpdateServerTime);
     server.on("/api/update-firmware", HTTP_POST, handleFirmwareUpdate);
+    server.on("/api/reset", HTTP_POST, handleReset);
 
     // Start the server
     server.begin();
@@ -1008,5 +1011,21 @@ void handleFirmwareUpdate() {
     } else {
         Serial.println("Invalid file upload status");
         server.send(400, "application/json", "{\"error\": \"Invalid file upload\"}");
+    }
+}
+
+void handleReset() {
+    Serial.println("Resetting device");
+
+    try {
+        ConfigManager* cm = ConfigManager::getInstance();
+
+        cm->setConfig("config", "{}");
+
+        server.send(200, "application/json", "{\"message\": \"Device reset\"}");
+        delay(1000);
+        ESP.restart();
+    } catch (const std::exception &e) {
+        server.send(500, "application/json", "{\"error\": \"Failed to reset device\"}");
     }
 }
