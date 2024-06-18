@@ -1,6 +1,8 @@
 #include "rtc.h"
 #include "relayManager.h"
 #include "configManager.h"
+#include "esp_heap_caps.h"
+#include "esp_log.h"
 
 #include <WiFi.h>
 #include <WebServer.h>
@@ -34,7 +36,7 @@ RTC* rtc = nullptr;
 ConfigManager* configManager = nullptr;
 
 // Relay Manager
-RelayManager relayManager;
+RelayManager* relayManager;
 std::queue<std::vector<Alarm *>> alarmQueue;
 
 // Function declarations
@@ -78,20 +80,47 @@ void setup()
     String config = LoadConfig();
 
     // Initialize the Relay Manager
+    Serial.println(config);
     if (config != "{}")
     {
-        relayManager = RelayManager(config);
+        relayManager = new RelayManager(config);
     }
     else
     {
         // Load default relays
-        relayManager.addRelay(32, "Relay 1");
-        relayManager.addRelay(33, "Relay 2");
-        relayManager.addRelay(25, "Relay 3");
-        relayManager.addRelay(26, "Relay 4");
+        relayManager->addRelay(32, "Relay 1");
+        relayManager->addRelay(33, "Relay 2");
+        relayManager->addRelay(25, "Relay 3");
+        relayManager->addRelay(26, "Relay 4");
 
         // Save default relays
         SaveConfig();
+    }
+
+    size_t free_heap = esp_get_free_heap_size();
+    ESP_LOGI("RAM", "Free heap size: %d bytes", free_heap);
+    // To get more detailed information about the heap
+    size_t free_8bit_heap = heap_caps_get_free_size(MALLOC_CAP_8BIT);
+    ESP_LOGI("RAM", "Free 8-bit capable heap size: %d bytes", free_8bit_heap);
+
+    Serial.println("Free heap size: " + String(free_heap) + " bytes");
+    Serial.println("Free 8-bit capable heap size: " + String(free_8bit_heap) + " bytes");
+
+    // Print all relays and alarms
+    std::vector<uint> relays = relayManager->getRelayIDs();
+    for (uint id : relays)
+    {
+        Serial.println("--------------------");
+        Relay *relay = relayManager->getRelayByID(id);
+        Serial.println("ID: " + String(relay->getId()) + " Name:" + relay->getName() + " Pin:" + relay->getPin() + " Alarms:" + String(relay->getAlarmIDs().size()) + " Pointer: " + String((uint)relay));
+        Serial.println("Relay: " + relay->getName());
+        std::vector<uint> alarms = relay->getAlarmIDs();
+        for (uint alarmId : alarms)
+        {
+            Alarm *alarm = relay->getAlarmByID(alarmId);
+            Serial.println("Alarm: " + String(alarm->getHour()) + ":" + String(alarm->getMinute()) + ":" + String(alarm->getSecond()));
+        }
+        Serial.println("--------------------");
     }
 
     // calculate new alarm queue
@@ -210,7 +239,7 @@ void calculateNextAlarm()
 {
     Serial.println("Calculating next alarm");
     DateTime now = rtc->now();
-    alarmQueue = relayManager.getNextAlarm();
+    alarmQueue = relayManager->getNextAlarm();
     lastAlarmCalculation = now;
 
 
@@ -251,7 +280,7 @@ void calculateNextAlarm()
 }
 
 void SaveConfig() {
-    configManager->setConfig("config", relayManager.toJson());
+    configManager->setConfig("config", relayManager->toJson());
 }
 
 String LoadConfig() {
@@ -386,12 +415,14 @@ void handleGetAllRelays()
         StaticJsonDocument<500> doc; // Adjust size as needed
         doc["systemName"] = systemName;
         JsonArray relaysArray = doc.createNestedArray("relays");
-        std::vector<uint> relayIDs = relayManager.getRelayIDs();
+        std::vector<uint> relayIDs = relayManager->getRelayIDs();
         for (uint id : relayIDs)
         {
-            Relay *relay = relayManager.getRelayByID(id);
+            Serial.println("Relay ID: " + String(id));
+            Relay *relay = relayManager->getRelayByID(id);
             if (relay != nullptr)
             {
+                Serial.println("Relay name: " + relay->getName());
                 JsonObject relayDoc = relaysArray.createNestedObject();
                 relayDoc["id"] = id;
                 relayDoc["name"] = relay->getName();
@@ -436,7 +467,7 @@ void handleRelayControl()
         uint relayId = doc["relayId"].as<uint>();
         bool state = doc["state"].as<bool>();
 
-        Relay *relay = relayManager.getRelayByID(relayId);
+        Relay *relay = relayManager->getRelayByID(relayId);
         if (relay != nullptr)
         {
             if (state)
@@ -486,10 +517,10 @@ void handleSystemSettings()
             day = "0" + day;
 
         JsonArray relaysArray = doc.createNestedArray("relays");
-        std::vector<uint> relayIDs = relayManager.getRelayIDs();
+        std::vector<uint> relayIDs = relayManager->getRelayIDs();
         for (uint id : relayIDs)
         {
-            Relay *relay = relayManager.getRelayByID(id);
+            Relay *relay = relayManager->getRelayByID(id);
             if (relay != nullptr)
             {
                 JsonObject relayDoc = relaysArray.createNestedObject();
@@ -540,7 +571,7 @@ void handleUpdateSettings()
         {
             uint id = relay["id"].as<uint>();
             String name = relay["name"].as<String>();
-            Relay *r = relayManager.getRelayByID(id);
+            Relay *r = relayManager->getRelayByID(id);
             if (r != nullptr)
             {
                 r->setName(name);
@@ -572,7 +603,7 @@ void handleGetRelayAlarms()
         uint relayId = server.arg("relayId").toInt();
 
         // get relay
-        Relay *relay = relayManager.getRelayByID(relayId);
+        Relay *relay = relayManager->getRelayByID(relayId);
         if (relay != nullptr)
         {
             StaticJsonDocument<500> doc; // Adjust size as needed
@@ -665,7 +696,7 @@ void handleCreateRelayAlarm()
         }
 
         // Get relay
-        Relay *relay = relayManager.getRelayByID(relayId);
+        Relay *relay = relayManager->getRelayByID(relayId);
         if (relay == nullptr)
         {
             sendJsonResponse(404, "{ \"error\": \"Relay not found\"}");
@@ -735,7 +766,7 @@ void handleUpdateRelayAlarm()
         uint alarmId = server.arg("alarmId").toInt();
 
         // Get relay
-        Relay *relay = relayManager.getRelayByID(relayId);
+        Relay *relay = relayManager->getRelayByID(relayId);
         if (relay == nullptr)
         {
             sendJsonResponse(404, "{ \"error\": \"Relay not found\"}");
@@ -807,7 +838,7 @@ void handleDeleteRelayAlarm()
         uint alarmId = server.arg("alarmId").toInt();
 
         // Get relay
-        Relay *relay = relayManager.getRelayByID(relayId);
+        Relay *relay = relayManager->getRelayByID(relayId);
         if (relay == nullptr)
         {
             sendJsonResponse(404, "{ \"error\": \"Relay not found\"}");
