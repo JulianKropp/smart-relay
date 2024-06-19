@@ -13,7 +13,7 @@ DateTime Alarm::calculateLastAlarm() const {
     for (int i = 0; i < 8; i++)
     {
         int day = ((weekday - i) % 7 + 7) % 7;
-        Serial.println("Checking day last: " + String(day) + " " + String(this->weekdays[day]));
+        // Serial.println("Checking day last: " + String(day) + " " + String(this->weekdays[day]));
         if (this->weekdays[day]) {
             // Calculate the last alarm time
             DateTime la = DateTime(now.year(), now.month(), now.day(), this->hour, this->minute, this->second);
@@ -26,7 +26,7 @@ DateTime Alarm::calculateLastAlarm() const {
         }
     }
 
-    Serial.println("Last alarm: " + String(lastA.year()) + "-" + String(lastA.month()) + "-" + String(lastA.day()) + " " + String(lastA.hour()) + ":" + String(lastA.minute()) + ":" + String(lastA.second()));
+    // Serial.println("Last alarm: " + String(lastA.year()) + "-" + String(lastA.month()) + "-" + String(lastA.day()) + " " + String(lastA.hour()) + ":" + String(lastA.minute()) + ":" + String(lastA.second()));
     return lastA;
 }
 
@@ -129,21 +129,25 @@ void Alarm::turnOff()
 void Alarm::setHour(const uint hour)
 {
     this->hour = hour;
+    this->lastAlarm = this->calculateLastAlarm();
 }
 
 void Alarm::setMinute(const uint minute)
 {
     this->minute = minute;
+    this->lastAlarm = this->calculateLastAlarm();
 }
 
 void Alarm::setSecond(const uint second)
 {
     this->second = second;
+    this->lastAlarm = this->calculateLastAlarm();
 }
 
 void Alarm::setWeekdays(const std::array<bool, 7> weekdays)
 {
     this->weekdays = weekdays;
+    this->lastAlarm = this->calculateLastAlarm();
 }
 
 void Alarm::setRelay(Relay *relay)
@@ -167,7 +171,7 @@ bool Alarm::checkAlarm(DateTime now) const {
         Serial.println("Alarm is in time range");
         return true;
     }
-    Serial.println("Alarm is not in time range");
+    // Serial.println("Alarm is not in time range");
 
     return false;
 }
@@ -182,7 +186,7 @@ uint Alarm::getNextAlarminSeconds(DateTime now) const
     for (int i = 0; i < 8; i++)
     {
         int day = (weekday + i) % 7;
-        Serial.println("Checking day: " + String(day) + " " + String(weekdays[day]));
+        // Serial.println("Checking day: " + String(day) + " " + String(weekdays[day]));
         if (weekdays[day])
         {
             // Calculate the next alarm time

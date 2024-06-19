@@ -200,33 +200,34 @@ void loop()
 
     if (counter == 0)
     {
-        Serial.println(alarmQueue.size());
+        // Serial.println(alarmQueue.size());
         // Check alarms
         DateTime now = rtc->now();
 
         if (!alarmQueue.empty())
         {
             std::vector<Alarm *> alarms = alarmQueue.front();
-            Serial.println(alarms.size());
-            for (Alarm *alarm : alarms)
+            if (alarms.size() > 0)
             {
-                Serial.println("Checking alarm for relay " + alarm->getRelay()->getName() + " at " + String(alarm->getHour()) + ":" + String(alarm->getMinute()) + ":" + String(alarm->getSecond()) + " with state " + String(alarm->getState()) + " and today: " + String(alarm->getWeekdays()[now.dayOfTheWeek()]) + " and next alarm in " + String(alarm->getNextAlarminSeconds(now)) + " seconds from now and last calculation was " + String(now.unixtime() - lastAlarmCalculation.unixtime()) + " seconds ago");
-                if (alarm->checkAlarm(now))
+                Serial.println("Checking alarm(s) at " + String(alarms[0]->getHour()) + ":" + String(alarms[0]->getMinute()) + ":" + String(alarms[0]->getSecond()) + " and next alarm in " + String(alarms[0]->getNextAlarminSeconds(now)) + " seconds from now and there will be " + String(alarms.size()) + " alarm(s) and last calculation was " + String(now.unixtime() - lastAlarmCalculation.unixtime()) + " seconds ago");
+                if (alarms[0]->checkAlarm(now))
                 {
-                    Relay *rel = alarm->getRelay();
-                    if (alarm->getState())
+                    for (Alarm *alarm : alarms)
                     {
-                        alarm->turnOn();
-                        Serial.println("Relay " + rel->getName() + " turned on");
-                    }
-                    else
-                    {
-                        alarm->turnOff();
-                        Serial.println("Relay " + rel->getName() + " turned off");
+                        Relay *rel = alarm->getRelay();
+                        if (alarm->getState())
+                        {
+                            alarm->turnOn();
+                            Serial.println("Relay " + rel->getName() + " turned on");
+                        }
+                        else
+                        {
+                            alarm->turnOff();
+                            Serial.println("Relay " + rel->getName() + " turned off");
+                        }
                     }
                     alarmQueue.pop();
                     alarmQueue.push(alarms);
-                    break;
                 }
             }
         }
@@ -235,7 +236,7 @@ void loop()
     // Check if a normal press was detected
     if (buttonPressedShort && !longPressDetected)
     {
-        Serial.println("Button Pressed briefly!");
+        Serial.println("Button Pressed briefly. Wifi turned on/off");
         toggleWifi();
         buttonPressedShort = false;
     }
@@ -243,7 +244,7 @@ void loop()
     // Check if a long press was detected
     if (longPressDetected)
     {
-        Serial.println("Button Pressed for more than 10 seconds!");
+        Serial.println("Button Pressed for more than 10 seconds! Factory reset and restart");
         factoryreset();
         restart();
         longPressDetected = false; // Reset the long press detection
@@ -491,11 +492,9 @@ void handleGetAllRelays()
         std::vector<uint> relayIDs = relayManager->getRelayIDs();
         for (uint id : relayIDs)
         {
-            Serial.println("Relay ID: " + String(id));
             Relay *relay = relayManager->getRelayByID(id);
             if (relay != nullptr)
             {
-                Serial.println("Relay name: " + relay->getName());
                 JsonObject relayDoc = relaysArray.createNestedObject();
                 relayDoc["id"] = id;
                 relayDoc["name"] = relay->getName();
